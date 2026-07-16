@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 // Mock data for awards
 const mockAwards = [
@@ -171,79 +170,83 @@ export default function AwardsPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
     } else if (format === 'pdf') {
-      // Generate actual PDF using jsPDF
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
+      // Generate PDF using html2canvas and jsPDF
+      // Create a hidden container with the table
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.backgroundColor = '#ffffff';
+      container.style.padding = '20px';
+      container.style.width = '1100px';
+      
+      container.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #8b4513; font-size: 24px; margin: 0;">獎項列表</h1>
+          <p style="color: #666; font-size: 12px;">香港培英中學</p>
+          <p style="color: #666; font-size: 10px;">學年: ${new Date().getFullYear()}-${new Date().getFullYear() + 1} | 導出日期: ${new Date().toLocaleDateString('zh-HK')} | 共 ${exportData.length} 項記錄</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background-color: #e8e8e8;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">序號</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">獎項名稱</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">類型</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">學年</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">學期</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">人數</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">狀態</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${exportData.map((row, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f9f9f9'};">
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['序號']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${row['獎項名稱']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['類型']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['學年']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['學期']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['獲獎人數']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['狀態']}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top: 20px; text-align: right; font-size: 10px; color: #999;">
+          獎項列表導出 · 香港培英中學AI管理系統
+        </div>
+      `;
+      
+      document.body.appendChild(container);
+      
+      // Dynamically import html2canvas
+      import('html2canvas').then((html2canvas) => {
+        html2canvas.default(container, { scale: 2, useCORS: true }).then((canvas) => {
+          document.body.removeChild(container);
+          
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = canvas.width;
+          const imgHeight = canvas.height;
+          
+          // Create PDF with appropriate dimensions
+          const pdf = new jsPDF({
+            orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [imgWidth, imgHeight + 40]
+          });
+          
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          pdf.save(`獎項列表_${new Date().toISOString().split('T')[0]}.pdf`);
+        }).catch((err) => {
+          document.body.removeChild(container);
+          console.error('PDF generation error:', err);
+          alert('PDF 生成失敗，請稍後再試');
+        });
+      }).catch((err) => {
+        document.body.removeChild(container);
+        console.error('html2canvas load error:', err);
+        alert('PDF 庫加載失敗，請稍後再試');
       });
-      
-      // Set font for Chinese support (use built-in font)
-      doc.setFont('helvetica');
-      
-      // Title
-      doc.setFontSize(20);
-      doc.setTextColor(139, 69, 19); // Brown color
-      doc.text('獎項列表', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-      
-      // School name
-      doc.setFontSize(12);
-      doc.setTextColor(102, 102, 102);
-      doc.text('香港培英中學', doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
-      
-      // Info line
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      const year = new Date().getFullYear();
-      doc.text(`學年: ${year}-${year + 1}  |  導出日期: ${new Date().toLocaleDateString('zh-HK')}  |  共 ${exportData.length} 項記錄`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
-      
-      // Prepare table data for autotable
-      const tableData = exportData.map(row => [
-        row['序號'],
-        row['獎項名稱'],
-        row['類型'],
-        row['學年'],
-        row['學期'],
-        row['獲獎人數'],
-        row['狀態'],
-      ]);
-      
-      // Add table using autotable
-      // @ts-ignore - autotable is added via import
-      doc.autoTable({
-        head: [['序號', '獎項名稱', '類型', '學年', '學期', '人數', '狀態']],
-        body: tableData,
-        startY: 35,
-        theme: 'striped',
-        headStyles: {
-          fillColor: [232, 232, 232],
-          textColor: [51, 51, 51],
-          fontStyle: 'bold',
-          halign: 'center',
-        },
-        bodyStyles: {
-          textColor: [51, 51, 51],
-        },
-        columnStyles: {
-          0: { halign: 'center', cellWidth: 15 },
-          1: { cellWidth: 50 },
-          2: { halign: 'center', cellWidth: 20 },
-          3: { halign: 'center', cellWidth: 25 },
-          4: { halign: 'center', cellWidth: 20 },
-          5: { halign: 'center', cellWidth: 15 },
-          6: { halign: 'center', cellWidth: 20 },
-        },
-        margin: { left: 15, right: 15 },
-      });
-      
-      // Footer
-      const pageHeight = doc.internal.pageSize.getHeight();
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text('獎項列表導出 · 香港培英中學AI管理系統', doc.internal.pageSize.getWidth() / 2, pageHeight - 10, { align: 'center' });
-      
-      // Save PDF
-      doc.save(`獎項列表_${new Date().toISOString().split('T')[0]}.pdf`);
     }
   };
 
