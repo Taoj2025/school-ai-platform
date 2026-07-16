@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, FileText, Download, Eye, Check, X } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 // Common input style using CSS variables
 const inputStyle: React.CSSProperties = {
@@ -55,18 +56,23 @@ export default function GenerateCertificatesPage() {
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedStudents([]);
+      setSelectAll(false);
     } else {
       setSelectedStudents(mockStudents.map((s) => s.id));
+      setSelectAll(true);
     }
-    setSelectAll(!selectAll);
   };
 
   const handleSelectStudent = (id: string) => {
+    let newSelected: string[];
     if (selectedStudents.includes(id)) {
-      setSelectedStudents(selectedStudents.filter((s) => s !== id));
+      newSelected = selectedStudents.filter((s) => s !== id);
     } else {
-      setSelectedStudents([...selectedStudents, id]);
+      newSelected = [...selectedStudents, id];
     }
+    setSelectedStudents(newSelected);
+    // Update selectAll based on whether all students are selected
+    setSelectAll(newSelected.length === mockStudents.length);
   };
 
   // Generate single certificate HTML
@@ -294,24 +300,77 @@ export default function GenerateCertificatesPage() {
     }
   };
 
-  const handleDownloadAll = () => {
-    // Download each certificate as a separate HTML file
+  const handleDownloadAll = async () => {
     const students = mockStudents.filter((s) => selectedStudents.includes(s.id));
-    const zipName = `${awardName}_獎狀_${new Date().toISOString().split('T')[0]}`;
+    
+    if (students.length === 0) {
+      alert('請選擇至少一名學生');
+      return;
+    }
 
-    // For simplicity, download the first certificate as a sample
-    // In production, this would use a proper zip library
-    const firstStudent = students[0];
-    if (firstStudent) {
-      const html = generateCertificateHTML(firstStudent);
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `獎狀_${firstStudent.name}_${firstStudent.student_no}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+    // Create a container for rendering certificates
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '1100px';
+    document.body.appendChild(container);
+
+    try {
+      // Dynamically import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Create a single PDF with all certificates
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      let isFirst = true;
+
+      for (let i = 0; i < students.length; i++) {
+        const student = students[i];
+        
+        // Generate certificate HTML
+        const certHTML = generateCertificateHTML(student);
+        container.innerHTML = certHTML;
+
+        // Wait for fonts and content to load
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Capture the certificate as image
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        if (!isFirst) {
+          pdf.addPage();
+        }
+        
+        // Add the certificate image to the PDF
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        isFirst = false;
+      }
+
+      // Remove the container
+      document.body.removeChild(container);
+
+      // Save the PDF
+      const safeAwardName = awardName.replace(/[<>:"/\\|?*]/g, '');
+      pdf.save(`${safeAwardName}_獎狀_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      document.body.removeChild(container);
+      alert('PDF 生成失敗，請稍後再試');
     }
   };
 

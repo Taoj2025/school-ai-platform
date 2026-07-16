@@ -1,12 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Edit, FileText, Download, User, Check, List } from 'lucide-react';
 import AwardsScriptDialog from '@/components/modules/apple/AwardsScriptDialog';
 
-// Mock award data
+// Mock award data - in production this would come from API
+const mockAwardDetails: Record<string, typeof mockAward> = {
+  '1': {
+    id: '1',
+    name: '學業優異獎',
+    type: 'academic',
+    academic_year: '2025-2026',
+    semester: '上學期',
+    total_recipients: 45,
+    status: 'published',
+    created_at: '2025-09-01',
+    description: '表彰學期內學業成績優異的學生',
+  },
+  '2': {
+    id: '2',
+    name: '體育表現獎',
+    type: 'sports',
+    academic_year: '2025-2026',
+    semester: '上學期',
+    total_recipients: 20,
+    status: 'draft',
+    created_at: '2025-10-01',
+    description: '表彰在體育方面表現出色的學生',
+  },
+  '3': {
+    id: '3',
+    name: '服務獎',
+    type: 'service',
+    academic_year: '2025-2026',
+    semester: '上學期',
+    total_recipients: 15,
+    status: 'published',
+    created_at: '2025-08-15',
+    description: '表彰積極參與學校服務的學生',
+  },
+};
+
 const mockAward = {
   id: '1',
   name: '學業優異獎',
@@ -27,13 +64,24 @@ const mockRecipients = [
   { id: '5', name: '劉志偉', class: '2A', student_no: '2024001', score: 91 },
 ];
 
-export default async function AwardDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const [award] = useState(mockAward);
-  const [recipients] = useState(mockRecipients);
+export default function AwardDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const [award, setAward] = useState(mockAward);
+  const [recipients, setRecipients] = useState(mockRecipients);
   const [generating, setGenerating] = useState(false);
   const [generatedIds, setGeneratedIds] = useState<string[]>([]);
   const [showScriptDialog, setShowScriptDialog] = useState(false);
+
+  // Load award data based on ID
+  useEffect(() => {
+    if (id && mockAwardDetails[id]) {
+      setAward(mockAwardDetails[id]);
+    } else if (id) {
+      // For other IDs, use default mock data with adjusted ID
+      setAward({ ...mockAward, id });
+    }
+  }, [id]);
 
   const handleGenerateCertificates = (studentIds: string[]) => {
     setGenerating(true);
@@ -49,6 +97,30 @@ export default async function AwardDetailPage({ params }: { params: Promise<{ id
 
   const handleDownloadAll = () => {
     alert('下載全部獎狀');
+  };
+
+  // Get status label
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'published': return '已發布';
+      case 'draft': return '草稿';
+      case 'archived': return '已歸檔';
+      default: return status;
+    }
+  };
+
+  // Get status color
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'published':
+        return { backgroundColor: 'var(--good-bg)', color: 'var(--good)' };
+      case 'draft':
+        return { backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' };
+      case 'archived':
+        return { backgroundColor: 'var(--muted-bg)', color: 'var(--muted)' };
+      default:
+        return { backgroundColor: 'var(--panel-soft)', color: 'var(--text)' };
+    }
   };
 
   return (
@@ -69,8 +141,8 @@ export default async function AwardDetailPage({ params }: { params: Promise<{ id
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{award.name}</h2>
                 <span className="px-2 py-1 text-xs font-medium rounded-full"
-                  style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
-                  已發布
+                  style={getStatusStyle(award.status)}>
+                  {getStatusLabel(award.status)}
                 </span>
               </div>
               <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
