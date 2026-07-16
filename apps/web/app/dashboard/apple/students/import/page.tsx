@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Upload, FileText, Download, Check, X, AlertCircle } from 'lucide-react';
+import { addStudent, getStudents } from '@/lib/studentStore';
 
 interface ImportedStudent {
   row: number;
@@ -16,6 +18,7 @@ interface ImportedStudent {
 }
 
 export default function ImportStudentsPage() {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imported, setImported] = useState<ImportedStudent[]>([]);
@@ -55,14 +58,54 @@ export default function ImportStudentsPage() {
   };
 
   const handleImport = () => {
-    const successCount = imported.filter((s) => s.status === 'success').length;
-    alert(`成功導入 ${successCount} 名學生`);
+    const successStudents = imported.filter((s) => s.status === 'success');
+    const existingStudents = getStudents();
+    const existingStudentNos = new Set(existingStudents.map((s) => s.student_no));
+
+    let importedCount = 0;
+    let skippedCount = 0;
+
+    successStudents.forEach((student) => {
+      if (existingStudentNos.has(student.student_no)) {
+        skippedCount++;
+      } else {
+        addStudent({
+          name: student.name,
+          student_no: student.student_no,
+          class: student.class,
+          gender: student.gender,
+          enrollment_date: new Date().toISOString().split('T')[0],
+          status: 'active',
+        });
+        importedCount++;
+      }
+    });
+
+    alert(`成功導入 ${importedCount} 名學生${skippedCount > 0 ? `（${skippedCount} 名學號重複已跳過）` : ''}`);
     setImported([]);
     setFile(null);
+
+    // Redirect to student list
+    router.push('/dashboard/apple/students');
+    router.refresh();
   };
 
   const downloadTemplate = () => {
-    alert('下載學生資料範本');
+    // Generate a CSV template
+    const headers = ['姓名', '學號', '班別', '性別'];
+    const exampleRows = [
+      ['陳小明', '2025001', '1A', 'M'],
+      ['李美美', '2025002', '1A', 'F'],
+    ];
+    const csvContent = '\uFEFF' + [headers, ...exampleRows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = '學生資料範本.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
   };
 
   return (

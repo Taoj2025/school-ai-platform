@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import {
@@ -15,20 +15,7 @@ import {
   UserCheck,
   AlertTriangle,
 } from 'lucide-react';
-
-// Mock data
-const mockStudents = [
-  { id: '1', name: '陳小明', student_no: '2025001', class: '1A', gender: 'M', enrollment_date: '2025-09-01', status: 'active' },
-  { id: '2', name: '李美美', student_no: '2025002', class: '1A', gender: 'F', enrollment_date: '2025-09-01', status: 'active' },
-  { id: '3', name: '張大文', student_no: '2025003', class: '1B', gender: 'M', enrollment_date: '2025-09-01', status: 'active' },
-  { id: '4', name: '王小红', student_no: '2025004', class: '1B', gender: 'F', enrollment_date: '2025-09-01', status: 'active' },
-  { id: '5', name: '劉志偉', student_no: '2024001', class: '2A', gender: 'M', enrollment_date: '2024-09-01', status: 'active' },
-  { id: '6', name: '黃淑芬', student_no: '2024002', class: '2A', gender: 'F', enrollment_date: '2024-09-01', status: 'active' },
-  { id: '7', name: '周杰倫', student_no: '2024003', class: '2B', gender: 'M', enrollment_date: '2024-09-01', status: 'inactive' },
-  { id: '8', name: '吳依琳', student_no: '2023001', class: '3A', gender: 'F', enrollment_date: '2023-09-01', status: 'active' },
-  { id: '9', name: '孫雅琪', student_no: '2023002', class: '3A', gender: 'F', enrollment_date: '2023-09-01', status: 'active' },
-  { id: '10', name: '鄭宇翔', student_no: '2023003', class: '3B', gender: 'M', enrollment_date: '2023-09-01', status: 'active' },
-];
+import { getStudents, type Student } from '@/lib/studentStore';
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
@@ -36,8 +23,31 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredStudents = mockStudents.filter((student) => {
+  // Load students on mount and listen for storage changes
+  useEffect(() => {
+    const loadStudents = () => {
+      const data = getStudents();
+      setStudents(data);
+      setLoading(false);
+    };
+
+    loadStudents();
+
+    // Listen for storage events from other tabs/windows
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'apple_students') {
+        loadStudents();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.student_no.toLowerCase().includes(searchTerm.toLowerCase());
@@ -46,8 +56,8 @@ export default function StudentsPage() {
     return matchesSearch && matchesClass && matchesStatus;
   });
 
-  const activeStudents = mockStudents.filter((s) => s.status === 'active').length;
-  const totalStudents = mockStudents.length;
+  const activeStudents = students.filter((s) => s.status === 'active').length;
+  const totalStudents = students.length;
 
   return (
     <>

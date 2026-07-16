@@ -1,13 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
+import { addStudent } from '@/lib/studentStore';
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
 export default function NewStudentPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     student_no: '',
@@ -33,9 +37,44 @@ export default function NewStudentPage() {
     outline: 'none',
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('學生已添加');
+
+    if (!formData.name || !formData.student_no) {
+      alert('請填寫姓名和學號');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      // Add student to the store
+      const newStudent = addStudent({
+        name: formData.name,
+        student_no: formData.student_no,
+        class: formData.class,
+        gender: formData.gender,
+        enrollment_date: formData.enrollment_date,
+        status: 'active',
+        date_of_birth: formData.date_of_birth,
+        id_number: formData.id_number,
+        parent_name: formData.parent_name,
+        parent_phone: formData.parent_phone,
+        address: formData.address,
+      });
+
+      console.log('Student added:', newStudent);
+      alert(`學生已添加：${newStudent.name} (${newStudent.student_no})`);
+
+      // Redirect to student list page
+      router.push('/dashboard/apple/students');
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to add student:', error);
+      alert('添加失敗，請稍後再試');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -199,11 +238,12 @@ export default function NewStudentPage() {
             </Link>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-md hover:opacity-90"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-md hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: 'var(--brand)' }}
             >
               <Save className="w-4 h-4" />
-              保存
+              {saving ? '保存中...' : '保存'}
             </button>
           </div>
         </form>

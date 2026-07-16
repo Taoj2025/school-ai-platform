@@ -4,110 +4,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
-import { ArrowLeft, Edit, FileText, Download, User, Award } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Download, User, Award, X } from 'lucide-react';
+import { getStudentById } from '@/lib/studentStore';
 
-// Mock student data
-const mockStudents: Record<string, typeof mockStudent> = {
-  '1': {
-    id: '1',
-    name: '陳小明',
-    student_no: '2025001',
-    class: '1A',
-    gender: 'M',
-    enrollment_date: '2025-09-01',
-    status: 'active',
-    date_of_birth: '2013-05-15',
-    id_number: 'A123456(7)',
-    parent_name: '陳先生',
-    parent_phone: '9876-5432',
-    address: '香港九龍彩虹區彩虹道123號',
-  },
-  '2': {
-    id: '2',
-    name: '李美美',
-    student_no: '2025002',
-    class: '1A',
-    gender: 'F',
-    enrollment_date: '2025-09-01',
-    status: 'active',
-    date_of_birth: '2013-08-22',
-    id_number: 'A234567(8)',
-    parent_name: '李太太',
-    parent_phone: '9123-4567',
-    address: '香港九龍旺角彌敦道456號',
-  },
-  '3': {
-    id: '3',
-    name: '張大文',
-    student_no: '2025003',
-    class: '1B',
-    gender: 'M',
-    enrollment_date: '2025-09-01',
-    status: 'active',
-    date_of_birth: '2013-03-10',
-    id_number: 'A345678(9)',
-    parent_name: '張先生',
-    parent_phone: '9234-5678',
-    address: '香港新界沙田區沙田正街789號',
-  },
-  '4': {
-    id: '4',
-    name: '王小红',
-    student_no: '2025004',
-    class: '1B',
-    gender: 'F',
-    enrollment_date: '2025-09-01',
-    status: 'active',
-    date_of_birth: '2013-11-25',
-    id_number: 'A456789(0)',
-    parent_name: '王太太',
-    parent_phone: '9345-6789',
-    address: '香港港島東區太古城道321號',
-  },
-  '5': {
-    id: '5',
-    name: '劉志偉',
-    student_no: '2024001',
-    class: '2A',
-    gender: 'M',
-    enrollment_date: '2024-09-01',
-    status: 'active',
-    date_of_birth: '2012-07-18',
-    id_number: 'A567890(1)',
-    parent_name: '劉先生',
-    parent_phone: '9456-7890',
-    address: '香港九龍觀塘區觀塘道654號',
-  },
-  '6': {
-    id: '6',
-    name: '黃思婷',
-    student_no: '2024002',
-    class: '2A',
-    gender: 'F',
-    enrollment_date: '2024-09-01',
-    status: 'active',
-    date_of_birth: '2012-04-12',
-    id_number: 'A678901(2)',
-    parent_name: '黃太太',
-    parent_phone: '9567-8901',
-    address: '香港新界元朗區元朗大馬路987號',
-  },
-  '7': {
-    id: '7',
-    name: '周俊宇',
-    student_no: '2024003',
-    class: '2B',
-    gender: 'M',
-    enrollment_date: '2024-09-01',
-    status: 'active',
-    date_of_birth: '2012-09-30',
-    id_number: 'A789012(3)',
-    parent_name: '周先生',
-    parent_phone: '9678-9012',
-    address: '香港港島南區香港仔大道147號',
-  },
-};
-
+// Mock student data (default fallback)
 const mockStudent = {
   id: '1',
   name: '陳小明',
@@ -147,15 +47,18 @@ export default function StudentDetailPage() {
   const [activeTab, setActiveTab] = useState<'info' | 'attendance' | 'awards' | 'certificates'>('info');
   const [student, setStudent] = useState(mockStudent);
   const [loading, setLoading] = useState(true);
+  const [showCertDialog, setShowCertDialog] = useState(false);
+  const [selectedCertType, setSelectedCertType] = useState<string>('study');
+  const [generating, setGenerating] = useState(false);
 
   // Load student data based on ID
   useEffect(() => {
     if (id) {
-      const studentData = mockStudents[id];
+      const studentData = getStudentById(id);
       if (studentData) {
-        setStudent(studentData);
+        setStudent(studentData as typeof mockStudent);
       } else {
-        // For other IDs, use default mock data with adjusted ID
+        // Fallback to default mock data with adjusted ID
         setStudent({ ...mockStudent, id });
       }
       setLoading(false);
@@ -184,6 +87,101 @@ export default function StudentDetailPage() {
         return { backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' };
       default:
         return { backgroundColor: 'var(--panel-soft)', color: 'var(--text)' };
+    }
+  };
+
+  const certTypes = [
+    { value: 'study', label: '在讀證明', description: '證明學生在校就讀' },
+    { value: 'conduct', label: '操行證明', description: '證明學生品行良好' },
+    { value: 'scholarship', label: '獎學金證明', description: '證明學生獲得獎學金' },
+    { value: 'attendance', label: '出席證明', description: '證明學生出席記錄良好' },
+  ];
+
+  const handleGenerateCertificate = async () => {
+    setGenerating(true);
+
+    try {
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '800px';
+      container.style.backgroundColor = '#ffffff';
+      document.body.appendChild(container);
+
+      const certTypeLabel = certTypes.find((c) => c.value === selectedCertType)?.label || '證明';
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+
+      container.innerHTML = `
+        <div style="font-family: 'Microsoft JhengHei', 'PingFang TC', serif; padding: 60px 80px; border: 8px double #8b4513; background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%); min-height: 1000px;">
+          <div style="text-align: center; margin-bottom: 40px;">
+            <div style="font-size: 24px; color: #8b4513; font-weight: bold; letter-spacing: 8px; margin-bottom: 10px;">香港培英中學</div>
+            <div style="font-size: 36px; color: #8b4513; font-weight: bold; letter-spacing: 16px;">${certTypeLabel}</div>
+            <div style="width: 60px; height: 3px; background: #8b4513; margin: 20px auto;"></div>
+          </div>
+
+          <div style="font-size: 16px; line-height: 2.5; color: #333; margin: 40px 0; text-indent: 2em;">
+            <p>茲證明本校學生</p>
+            <p style="text-align: center; font-size: 24px; font-weight: bold; color: #8b4513; margin: 20px 0;">
+              ${student.name}（學號：${student.student_no}）
+            </p>
+            <p>現於本校 ${student.class} 班就讀，${selectedCertType === 'study' ? '在校期間表現良好，特此證明。' : selectedCertType === 'conduct' ? '品行端正，遵守校規，特此證明。' : selectedCertType === 'scholarship' ? '榮獲本校獎學金，特此證明。' : '出席記錄良好，特此證明。'}</p>
+          </div>
+
+          <div style="margin-top: 80px; display: flex; justify-content: space-between;">
+            <div style="text-align: center;">
+              <div style="border-top: 2px solid #333; width: 150px; padding-top: 10px; font-size: 14px;">班主任簽署</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="border-top: 2px solid #333; width: 150px; padding-top: 10px; font-size: 14px;">校長簽署</div>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 60px; font-size: 14px; color: #666;">
+            <p>發出日期：${dateStr}</p>
+            <p style="margin-top: 10px;">（本證明書須蓋校印方為有效）</p>
+          </div>
+        </div>
+      `;
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Dynamically import html2canvas and jsPDF
+      const [html2canvas, jspdfModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+      const canvas = await html2canvas.default(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL('image/png');
+      const jsPDF = jspdfModule.default;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+      const fileName = `${certTypeLabel}_${student.name}_${student.student_no}.pdf`;
+      pdf.save(fileName);
+
+      setShowCertDialog(false);
+    } catch (error) {
+      console.error('Certificate generation error:', error);
+      alert('證明生成失敗，請稍後再試');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -242,7 +240,9 @@ export default function StudentDetailPage() {
               <Edit className="w-4 h-4" />
               編輯
             </Link>
-            <button className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+            <button
+              onClick={() => setShowCertDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
               style={{ backgroundColor: 'var(--brand)' }}>
               <FileText className="w-4 h-4" />
               生成證明
@@ -397,6 +397,85 @@ export default function StudentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Certificate Generation Dialog */}
+      {showCertDialog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={() => !generating && setShowCertDialog(false)}
+        >
+          <div
+            className="rounded-lg w-full max-w-md p-6"
+            style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>生成證明文件</h3>
+              <button
+                onClick={() => setShowCertDialog(false)}
+                disabled={generating}
+                className="p-1 rounded hover:opacity-70 disabled:opacity-30"
+                style={{ color: 'var(--muted)' }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+              為 {student.name}（學號：{student.student_no}）選擇證明類型
+            </p>
+
+            <div className="space-y-2 mb-6">
+              {certTypes.map((type) => (
+                <label
+                  key={type.value}
+                  className="flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:opacity-80"
+                  style={{
+                    borderWidth: '1px',
+                    borderColor: selectedCertType === type.value ? 'var(--brand)' : 'var(--border)',
+                    backgroundColor: selectedCertType === type.value ? 'var(--brand-light)' : 'var(--panel-soft)',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="certType"
+                    value={type.value}
+                    checked={selectedCertType === type.value}
+                    onChange={(e) => setSelectedCertType(e.target.value)}
+                    className="mt-1"
+                    disabled={generating}
+                  />
+                  <div>
+                    <p className="font-medium" style={{ color: 'var(--text)' }}>{type.label}</p>
+                    <p className="text-sm" style={{ color: 'var(--muted)' }}>{type.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowCertDialog(false)}
+                disabled={generating}
+                className="px-4 py-2 border rounded-lg hover:opacity-80 disabled:opacity-50"
+                style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleGenerateCertificate}
+                disabled={generating}
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--brand)' }}
+              >
+                <Download className="w-4 h-4" />
+                {generating ? '生成中...' : '下載 PDF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
