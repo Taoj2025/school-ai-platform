@@ -1,210 +1,151 @@
-'use client';
-
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
-import {
-  Trophy,
-  Wallet,
-  Package,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  ArrowRight,
-} from 'lucide-react';
-
-const stats = [
-  {
-    name: '獎項總數',
-    value: '24',
-    change: '+3',
-    changeType: 'positive',
-    icon: Trophy,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-50',
-    href: '/dashboard/apple/awards',
-  },
-  {
-    name: '收入總計',
-    value: 'HK$125,000',
-    change: '+12%',
-    changeType: 'positive',
-    icon: Wallet,
-    color: 'text-green-500',
-    bgColor: 'bg-green-50',
-    href: '/dashboard/apple/finance',
-  },
-  {
-    name: '支出總計',
-    value: 'HK$68,500',
-    change: '-5%',
-    changeType: 'negative',
-    icon: TrendingDown,
-    color: 'text-red-500',
-    bgColor: 'bg-red-50',
-    href: '/dashboard/apple/finance',
-  },
-  {
-    name: '資產數量',
-    value: '1,234',
-    change: '+45',
-    changeType: 'positive',
-    icon: Package,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
-    href: '/dashboard/apple/assets',
-  },
-  {
-    name: '學生人數',
-    value: '856',
-    change: '+12',
-    changeType: 'positive',
-    icon: Users,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-50',
-    href: '/dashboard/apple/students',
-  },
-];
-
-const recentAwards = [
-  { id: 1, title: '2024-2025年度學業獎', type: 'academic', recipients: 45, date: '2025-03-15' },
-  { id: 2, title: '品行優秀獎', type: 'conduct', recipients: 32, date: '2025-03-10' },
-  { id: 3, title: '服務之星獎', type: 'service', recipients: 18, date: '2025-02-28' },
-];
-
-const quickActions = [
-  { name: '新增獎項', href: '/dashboard/apple/awards/new', icon: Trophy },
-  { name: '記錄收入', href: '/dashboard/apple/finance/income/new', icon: Wallet },
-  { name: '添加資產', href: '/dashboard/apple/assets/new', icon: Package },
-  { name: '導入學生', href: '/dashboard/apple/students/import', icon: Users },
-];
+import { Award, Wallet, Package, Users, Plus, FileText, ArrowRight } from 'lucide-react';
 
 export default function AppleOverviewPage() {
   return (
     <>
-      <Topbar title="Apple 子系統概覽" />
-      
-      <div className="p-6 space-y-6">
+      <Topbar title="總覽" />
+      <div className="space-y-4">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Link
-                key={stat.name}
-                href={stat.href}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                    <Icon className={`w-5 h-5 ${stat.color}`} />
-                  </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {stat.change}
-                  </span>
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: '獎項總數', value: '12', icon: Award, color: 'var(--brand)' },
+            { label: '本學期收入', value: 'HK$ 133,500', icon: Wallet, color: 'var(--good)' },
+            { label: '資產數量', value: '45', icon: Package, color: 'var(--info)' },
+            { label: '學生人數', value: '320', icon: Users, color: 'var(--accent)' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="p-3 rounded-lg"
+              style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-2.5 rounded-lg"
+                  style={{ backgroundColor: 'var(--panel-soft)' }}
+                >
+                  <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
                 </div>
-                <p className="mt-3 text-2xl font-semibold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-500">{stat.name}</p>
-              </Link>
-            );
-          })}
+                <div>
+                  <p className="text-xs" style={{ color: 'var(--muted)' }}>{stat.label}</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--text)' }}>{stat.value}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">快速操作</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
+        {/* Main Content */}
+        <div className="grid grid-cols-3 gap-4">
+          {/* Quick Actions */}
+          <div
+            className="col-span-2 p-4 rounded-lg"
+            style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}
+          >
+            <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--text)' }}>
+              快速操作
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { name: '新增獎項', href: '/dashboard/apple/awards/new', icon: Award, desc: '創建新獎項記錄' },
+                { name: '記錄收支', href: '/dashboard/apple/finance', icon: Wallet, desc: '新增收入或支出' },
+                { name: '添加資產', href: '/dashboard/apple/assets/new', icon: Package, desc: '新增學校資產' },
+                { name: '導入學生', href: '/dashboard/apple/students/import', icon: Users, desc: '批量導入學生' },
+              ].map((action) => (
                 <Link
                   key={action.name}
                   href={action.href}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:border-brand"
+                  style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)' }}
                 >
-                  <Icon className="w-6 h-6 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">{action.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Recent Awards & Upcoming Events */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Awards */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">最近獎項</h2>
-              <Link
-                href="/dashboard/apple/awards"
-                className="flex items-center text-sm text-primary-600 hover:text-primary-700"
-              >
-                查看全部
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {recentAwards.map((award) => (
-                <Link
-                  key={award.id}
-                  href={`/dashboard/apple/awards/${award.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{award.title}</p>
-                    <p className="text-sm text-gray-500">
-                      {award.recipients} 名獲獎者 · {award.date}
-                    </p>
+                  <div
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand-text)' }}
+                  >
+                    <action.icon className="w-4 h-4" />
                   </div>
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">
-                    {award.type === 'academic' && '學業'}
-                    {award.type === 'conduct' && '品行'}
-                    {award.type === 'service' && '服務'}
-                  </span>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{action.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--muted)' }}>{action.desc}</p>
+                  </div>
                 </Link>
               ))}
             </div>
           </div>
 
           {/* Upcoming Events */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">即將到來</h2>
+          <div
+            className="p-4 rounded-lg"
+            style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}
+          >
+            <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--text)' }}>
+              即將到來
+            </h3>
+            <div className="space-y-2">
+              {[
+                { name: '獎學金發放日', date: '2026-09-15' },
+                { name: '頒獎典禮', date: '2026-09-20' },
+                { name: '學期資產盤點', date: '2026-10-01' },
+              ].map((event) => (
+                <div
+                  key={event.name}
+                  className="flex items-center justify-between p-2 rounded-lg"
+                  style={{ backgroundColor: 'var(--panel-soft)' }}
+                >
+                  <span className="text-sm" style={{ color: 'var(--text)' }}>{event.name}</span>
+                  <span className="text-xs" style={{ color: 'var(--muted)' }}>{event.date}</span>
+                </div>
+              ))}
             </div>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary-50">
-                  <Calendar className="w-5 h-5 text-primary-600" />
+          </div>
+        </div>
+
+        {/* Recent Awards */}
+        <div
+          className="p-4 rounded-lg"
+          style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold" style={{ color: 'var(--text)' }}>
+              最新獎項
+            </h3>
+            <Link
+              href="/dashboard/apple/awards"
+              className="flex items-center gap-1 text-sm hover:underline"
+              style={{ color: 'var(--brand)' }}
+            >
+              查看全部 <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {[
+              { name: '學業優異獎', type: '學業', semester: '2025-2026 上學期', count: 45 },
+              { name: '品行優良獎', type: '品行', semester: '2025-2026 上學期', count: 30 },
+              { name: '服務精神獎', type: '服務', semester: '2025-2026 全學年', count: 20 },
+            ].map((award) => (
+              <div
+                key={award.name}
+                className="flex items-center justify-between p-3 rounded-lg border"
+                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="px-2 py-1 rounded-full text-xs font-bold"
+                    style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}
+                  >
+                    {award.type}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{award.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--muted)' }}>{award.semester}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">獎學金發放日</p>
-                  <p className="text-sm text-gray-500">2025年4月15日</p>
-                </div>
+                <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+                  {award.count} 人
+                </span>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-green-50">
-                  <Trophy className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">頒獎典禮</p>
-                  <p className="text-sm text-gray-500">2025年4月20日</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  <Package className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">資產盤點</p>
-                  <p className="text-sm text-gray-500">2025年4月25日</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

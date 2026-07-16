@@ -3,31 +3,88 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 249, 250, 251;
-  --background-end-rgb: 255, 255, 255;
+  /* Color Scheme - 可在這裡更換主題 */
+  --bg: #f6f7f9;
+  --bg-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d8dee6' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  
+  /* Panel Colors */
+  --panel: #ffffff;
+  --panel-soft: #f1f5f8;
+  
+  /* Text Colors */
+  --text: #1d2939;
+  --muted: #667085;
+  
+  /* Border */
+  --border: #d8dee6;
+  
+  /* Brand Colors - 深青色系 */
+  --brand: #23675f;
+  --brand-strong: #174f49;
+  --brand-light: #d9ebe7;
+  --brand-text: #123a36;
+  
+  /* Accent */
+  --accent: #a55b2a;
+  
+  /* Status Colors */
+  --warning: #936a00;
+  --warning-bg: #fffaeb;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
+  --good: #027a48;
+  --good-bg: #ecfdf3;
+  --info: #155eef;
+  --info-bg: #e0f2fe;
+  
+  /* Shadow */
+  --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  
+  /* Sidebar */
+  --sidebar-bg: #102a2f;
+  --sidebar-text: #eef7f5;
+  --sidebar-muted: #a7c3bd;
+  --sidebar-item: #dcecea;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 17, 24, 39;
-    --background-end-rgb: 17, 24, 39;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  margin: 0;
+  background: var(--bg);
+  background-image: var(--bg-pattern);
+  color: var(--text);
+  font-family: 'Microsoft JhengHei', 'Microsoft YaHei', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 @layer base {
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
   }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel-soft);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }

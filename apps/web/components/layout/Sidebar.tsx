@@ -2,117 +2,78 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import {
-  Trophy,
-  Wallet,
-  Package,
-  Users,
-  LayoutDashboard,
-  Settings,
-  ChevronDown,
-} from 'lucide-react';
-import { useState } from 'react';
 
 const navigation = [
-  { name: '概覽', href: '/dashboard/apple', icon: LayoutDashboard },
-  { 
-    name: '獎項管理', 
-    href: '/dashboard/apple/awards',
-    icon: Trophy,
-    children: [
-      { name: '獎項列表', href: '/dashboard/apple/awards' },
-      { name: '生成獎狀', href: '/dashboard/apple/awards/generate' },
-    ],
-  },
-  { name: '財務管理', href: '/dashboard/apple/finance', icon: Wallet },
-  { name: '資產管理', href: '/dashboard/apple/assets', icon: Package },
-  { name: '學生管理', href: '/dashboard/apple/students', icon: Users },
+  { name: '總覽', href: '/dashboard/apple' },
+  { name: '獎項管理', href: '/dashboard/apple/awards' },
+  { name: '財務管理', href: '/dashboard/apple/finance' },
+  { name: '資產管理', href: '/dashboard/apple/assets' },
+  { name: '學生管理', href: '/dashboard/apple/students' },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['獎項管理']);
-
-  const toggleExpand = (name: string) => {
-    setExpandedItems((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
-    );
-  };
-
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <div className="flex flex-col w-64 bg-white border-r border-gray-200">
-      <div className="flex items-center h-16 px-4 border-b border-gray-200">
-        <span className="text-xl font-bold text-primary-600">Apple 子系統</span>
+    <aside
+      className="flex flex-col w-[224px] h-screen shrink-0"
+      style={{ backgroundColor: 'var(--sidebar-bg)' }}
+    >
+      {/* Brand */}
+      <div className="flex items-center gap-3 px-3 py-4">
+        <div
+          className="flex items-center justify-center w-10 h-10 rounded-lg text-lg font-bold"
+          style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand-text)' }}
+        >
+          PY
+        </div>
+        <div>
+          <h1 className="text-base font-semibold" style={{ color: 'var(--sidebar-text)' }}>
+            Apple 工作台
+          </h1>
+          <p className="text-xs" style={{ color: 'var(--sidebar-muted)' }}>
+            獎狀獎學金管理
+          </p>
+        </div>
       </div>
-      
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+
+      {/* Navigation */}
+      <nav className="flex flex-col gap-1 px-2 py-2">
         {navigation.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href);
-          const hasChildren = !!item.children;
-          const isExpanded = expandedItems.includes(item.name);
-
+          const isActive = pathname === item.href;
           return (
-            <div key={item.name}>
-              <Link
-                href={hasChildren ? '#' : item.href}
-                onClick={hasChildren ? (e) => { e.preventDefault(); toggleExpand(item.name); } : undefined}
-                className={cn(
-                  'flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                  active
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5" />
-                  <span>{item.name}</span>
-                </div>
-                {hasChildren && (
-                  <ChevronDown
-                    className={cn(
-                      'w-4 h-4 transition-transform',
-                      isExpanded && 'rotate-180'
-                    )}
-                  />
-                )}
-              </Link>
-
-              {hasChildren && isExpanded && (
-                <div className="pl-8 mt-1 space-y-1">
-                  {item.children!.map((child) => (
-                    <Link
-                      key={child.name}
-                      href={child.href}
-                      className={cn(
-                        'block px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                        pathname === child.href
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      )}
-                    >
-                      {child.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive ? 'text-white' : 'text-sidebar-item'
+              }`}
+              style={{
+                backgroundColor: isActive ? 'var(--sidebar-hover-bg)' : 'transparent',
+                color: isActive ? '#ffffff' : 'var(--sidebar-item)',
+              }}
+            >
+              {item.name}
+            </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
-        <Link
-          href="/dashboard/settings"
-          className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
-        >
-          <Settings className="w-5 h-5" />
-          <span>設置</span>
-        </Link>
+      {/* Bottom Note */}
+      <div
+        className="mx-3 mb-4 p-3 rounded-lg"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        }}
+      >
+        <strong className="text-sm" style={{ color: 'var(--sidebar-text)' }}>
+          目前身份：Apple
+        </strong>
+        <p className="text-xs mt-1" style={{ color: 'var(--sidebar-muted)' }}>
+          只顯示已授權的獎項獎學金、收支記錄與資產管理功能。
+        </p>
       </div>
-    </div>
+    </aside>
   );
 }

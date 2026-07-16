@@ -9,34 +9,57 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        // Primary Brand Colors (深青色系)
+        brand: {
+          DEFAULT: 'var(--brand)',
+          strong: 'var(--brand-strong)',
+          light: 'var(--brand-light)',
+          text: 'var(--brand-text)',
         },
-        accent: {
-          50: '#fefce8',
-          100: '#fef9c3',
-          200: '#fef08a',
-          300: '#fde047',
-          400: '#facc15',
-          500: '#eab308',
-          600: '#ca8a04',
-          700: '#a16207',
-          800: '#854d0e',
-          900: '#713f12',
+        // Custom colors matching design system
+        bg: 'var(--bg)',
+        panel: 'var(--panel)',
+        'panel-soft': 'var(--panel-soft)',
+        text: 'var(--text)',
+        muted: 'var(--muted)',
+        border: 'var(--border)',
+        accent: 'var(--accent)',
+        // Status colors
+        warning: 'var(--warning)',
+        danger: 'var(--danger)',
+        good: 'var(--good)',
+        info: 'var(--info)',
+        // Sidebar
+        sidebar: {
+          bg: 'var(--sidebar-bg)',
+          text: 'var(--sidebar-text)',
+          muted: 'var(--sidebar-muted)',
+          item: 'var(--sidebar-item)',
+        },
+        // Primary replacement
+        primary: {
+          50: '#d9ebe7',
+          100: '#b3d7cf',
+          200: '#8dc3b7',
+          300: '#67af9f',
+          400: '#419b87',
+          500: '#23675f',
+          600: '#174f49',
+          700: '#123a36',
+          800: '#0c2624',
+          900: '#071312',
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['Microsoft JhengHei', 'Microsoft YaHei', 'Arial', 'system-ui', 'sans-serif'],
         mono: ['var(--font-roboto-mono)', 'monospace'],
+      },
+      borderRadius: {
+        DEFAULT: '8px',
+      },
+      boxShadow: {
+        panel: 'var(--shadow)',
+        'panel-sm': 'var(--shadow-sm)',
       },
     },
   },

@@ -2,82 +2,75 @@
 
 import { useState } from 'react';
 import Topbar from '@/components/layout/Topbar';
-import Link from 'next/link';
-import { formatDate, incomeCategoryLabels, expenseCategoryLabels, formatCurrency } from '@/lib/utils';
 import {
   Plus,
   Search,
-  Tabs,
   TrendingUp,
   TrendingDown,
   FileText,
   Download,
-  Upload,
+  Eye,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 
-interface FinanceStats {
-  total_income: number;
-  total_expense: number;
-  net_balance: number;
-  currency: string;
-}
+// Mock data
+const mockIncome = [
+  { id: '1', date: '2025-09-15', description: '學費收入', amount: 125000, category: 'tuition', source: '2025-2026 第一期學費' },
+  { id: '2', date: '2025-09-20', description: '獎學金捐贈', amount: 5000, category: 'donation', source: '校友獎學金' },
+  { id: '3', date: '2025-09-25', description: '活動報名費', amount: 3500, category: 'activity', source: '暑期活動' },
+];
 
-interface IncomeRecord {
-  id: string;
-  category: string;
-  amount: number;
-  currency: string;
-  date: string;
-  payer?: string;
-  description?: string;
-  receipt_no?: string;
-}
+const mockExpense = [
+  { id: '1', date: '2025-09-10', description: '辦公用品', amount: 2500, category: 'supplies', vendor: '文儀批发' },
+  { id: '2', date: '2025-09-15', description: '設備維修', amount: 8000, category: 'maintenance', vendor: '機電工程' },
+  { id: '3', date: '2025-09-20', description: '活動支出', amount: 12000, category: 'activity', vendor: '活動統籌' },
+];
 
-interface ExpenseRecord {
-  id: string;
-  category: string;
-  amount: number;
-  currency: string;
-  date: string;
-  vendor?: string;
-  description?: string;
-  payment_status: string;
-}
+const incomeCategories = [
+  { value: 'tuition', label: '學費' },
+  { value: 'donation', label: '捐贈' },
+  { value: 'activity', label: '活動' },
+  { value: 'other', label: '其他' },
+];
+
+const expenseCategories = [
+  { value: 'supplies', label: '辦公用品' },
+  { value: 'maintenance', label: '設備維修' },
+  { value: 'activity', label: '活動支出' },
+  { value: 'salary', label: '人員薪酬' },
+  { value: 'other', label: '其他' },
+];
 
 export default function FinancePage() {
-  const [activeTab, setActiveTab] = useState<'income' | 'expense'>('income');
+  const [activeTab, setActiveTab] = useState<'income' | 'expense' | 'report'>('income');
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Mock data - in production, fetch from API
-  const stats: FinanceStats = {
-    total_income: 125000,
-    total_expense: 68500,
-    net_balance: 56500,
-    currency: 'HKD',
+  const [showIncomeDialog, setShowIncomeDialog] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+
+  const filteredIncome = mockIncome.filter((item) =>
+    item.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredExpense = mockExpense.filter((item) =>
+    item.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalIncome = mockIncome.reduce((sum, item) => sum + item.amount, 0);
+  const totalExpense = mockExpense.reduce((sum, item) => sum + item.amount, 0);
+  const balance = totalIncome - totalExpense;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('zh-HK', {
+      style: 'currency',
+      currency: 'HKD',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
-
-  const incomeRecords: IncomeRecord[] = [
-    { id: '1', category: 'tuition', amount: 80000, currency: 'HKD', date: '2025-03-01', payer: '家長會', description: '學費收入' },
-    { id: '2', category: 'donation', amount: 25000, currency: 'HKD', date: '2025-02-15', payer: '校友會', description: '捐贈款項' },
-    { id: '3', category: 'event', amount: 20000, currency: 'HKD', date: '2025-02-20', description: '運動會報名費' },
-  ];
-
-  const expenseRecords: ExpenseRecord[] = [
-    { id: '1', category: 'equipment', amount: 35000, currency: 'HKD', date: '2025-03-05', vendor: '科技公司', description: '購買電腦設備' },
-    { id: '2', category: 'maintenance', amount: 15000, currency: 'HKD', date: '2025-02-25', vendor: '維修公司', description: '校舍維修' },
-    { id: '3', category: 'event', amount: 18500, currency: 'HKD', date: '2025-02-10', description: '運動會支出' },
-  ];
 
   return (
     <>
-      <Topbar 
-        title="財務管理"
-        breadcrumbs={[
-          { name: 'Apple 子系統', href: '/dashboard/apple' },
-          { name: '財務管理' },
-        ]}
-      />
-      
+      <Topbar title="財務管理" />
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -90,10 +83,23 @@ export default function FinancePage() {
               <Download className="w-4 h-4" />
               匯出報表
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-              <Plus className="w-4 h-4" />
-              記錄收支
-            </button>
+            {activeTab === 'income' ? (
+              <button
+                onClick={() => setShowIncomeDialog(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                <Plus className="w-4 h-4" />
+                記錄收入
+              </button>
+            ) : activeTab === 'expense' ? (
+              <button
+                onClick={() => setShowExpenseDialog(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                <Plus className="w-4 h-4" />
+                記錄支出
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -106,7 +112,7 @@ export default function FinancePage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">總收入</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.total_income)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalIncome)}</p>
               </div>
             </div>
           </div>
@@ -117,7 +123,7 @@ export default function FinancePage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">總支出</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.total_expense)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalExpense)}</p>
               </div>
             </div>
           </div>
@@ -128,7 +134,9 @@ export default function FinancePage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">結餘</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.net_balance)}</p>
+                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(balance)}
+                </p>
               </div>
             </div>
           </div>
@@ -158,102 +166,340 @@ export default function FinancePage() {
               >
                 支出記錄
               </button>
+              <button
+                onClick={() => setActiveTab('report')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 ${
+                  activeTab === 'report'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                統計報表
+              </button>
             </nav>
           </div>
 
           {/* Content */}
           <div className="p-6">
-            {/* Search */}
-            <div className="mb-4">
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="search"
-                  placeholder={`搜索${activeTab === 'income' ? '收入' : '支出'}記錄...`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
+            {activeTab !== 'report' && (
+              <div className="mb-4">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="search"
+                    placeholder={`搜索${activeTab === 'income' ? '收入' : '支出'}記錄...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Table */}
-            {activeTab === 'income' ? (
+            {activeTab === 'income' && (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">類別</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">付款人</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">說明</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">來源</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">金額</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {incomeRecords.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">{formatDate(record.date)}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
-                            {incomeCategoryLabels[record.category] || record.category}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{record.payer || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{record.description || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-right font-medium text-green-600">
-                          {formatCurrency(record.amount, record.currency)}
+                    {filteredIncome.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                          暫無收入記錄
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredIncome.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.description}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {incomeCategories.find((c) => c.value === item.category)?.label}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{item.source}</td>
+                          <td className="px-4 py-3 text-sm text-right font-medium text-green-600">
+                            +{formatCurrency(item.amount)}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button className="p-1.5 text-gray-500 hover:text-red-600 rounded hover:bg-gray-100">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            ) : (
+            )}
+
+            {activeTab === 'expense' && (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">類別</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">供應商</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">說明</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">金額</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">狀態</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {expenseRecords.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">{formatDate(record.date)}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">
-                            {expenseCategoryLabels[record.category] || record.category}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{record.vendor || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{record.description || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-right font-medium text-red-600">
-                          {formatCurrency(record.amount, record.currency)}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            record.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
-                            record.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {record.payment_status === 'paid' ? '已支付' : record.payment_status === 'partial' ? '部分支付' : '未支付'}
-                          </span>
+                    {filteredExpense.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                          暫無支出記錄
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredExpense.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.description}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {expenseCategories.find((c) => c.value === item.category)?.label}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{item.vendor}</td>
+                          <td className="px-4 py-3 text-sm text-right font-medium text-red-600">
+                            -{formatCurrency(item.amount)}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button className="p-1.5 text-gray-500 hover:text-red-600 rounded hover:bg-gray-100">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {activeTab === 'report' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4">收入分佈</h3>
+                    <div className="space-y-3">
+                      {incomeCategories.map((cat) => {
+                        const catTotal = mockIncome
+                          .filter((i) => i.category === cat.value)
+                          .reduce((sum, i) => sum + i.amount, 0);
+                        const percentage = totalIncome > 0 ? (catTotal / totalIncome) * 100 : 0;
+                        return (
+                          <div key={cat.value}>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>{cat.label}</span>
+                              <span>{formatCurrency(catTotal)} ({percentage.toFixed(1)}%)</span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-green-500 rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4">支出分佈</h3>
+                    <div className="space-y-3">
+                      {expenseCategories.map((cat) => {
+                        const catTotal = mockExpense
+                          .filter((i) => i.category === cat.value)
+                          .reduce((sum, i) => sum + i.amount, 0);
+                        const percentage = totalExpense > 0 ? (catTotal / totalExpense) * 100 : 0;
+                        return (
+                          <div key={cat.value}>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>{cat.label}</span>
+                              <span>{formatCurrency(catTotal)} ({percentage.toFixed(1)}%)</span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-red-500 rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Income Dialog */}
+      {showIncomeDialog && (
+        <RecordDialog
+          type="income"
+          onClose={() => setShowIncomeDialog(false)}
+        />
+      )}
+
+      {/* Expense Dialog */}
+      {showExpenseDialog && (
+        <RecordDialog
+          type="expense"
+          onClose={() => setShowExpenseDialog(false)}
+        />
+      )}
     </>
+  );
+}
+
+function RecordDialog({
+  type,
+  onClose,
+}: {
+  type: 'income' | 'expense';
+  onClose: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    description: '',
+    amount: '',
+    category: type === 'income' ? 'tuition' : 'supplies',
+    source: '',
+    vendor: '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(`${type === 'income' ? '收入' : '支出'}記錄已保存`);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-full max-w-lg p-6">
+        <h3 className="text-lg font-semibold mb-4">
+          {type === 'income' ? '記錄收入' : '記錄支出'}
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">日期</label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
+            <input
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">金額 (HKD)</label>
+              <input
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">類別</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {type === 'income'
+                  ? incomeCategories.map((cat) => (
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
+                    ))
+                  : expenseCategories.map((cat) => (
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
+                    ))}
+              </select>
+            </div>
+          </div>
+
+          {type === 'income' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">來源</label>
+              <input
+                type="text"
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">供應商</label>
+              <input
+                type="text"
+                value={formData.vendor}
+                onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            >
+              保存
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

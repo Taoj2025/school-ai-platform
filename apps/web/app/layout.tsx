@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'School AI Platform - Apple Subsystem',
@@ -13,8 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-HK">
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">
-        {children}
+      <body className="min-h-screen font-sans antialiased">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -3,60 +3,60 @@
 import { useState } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
-import { formatDate, studentStatusLabels } from '@/lib/utils';
 import {
   Plus,
   Search,
   Upload,
   Download,
-  User,
-  Mail,
-  Phone,
+  Eye,
+  Edit,
   FileText,
+  Users,
+  UserCheck,
+  AlertTriangle,
 } from 'lucide-react';
 
-interface Student {
-  id: string;
-  student_no: string;
-  name_zh: string;
-  name_en?: string;
-  gender: string;
-  class_name: string;
-  grade: number;
-  enrollment_date: string;
-  status: string;
-}
+// Mock data
+const mockStudents = [
+  { id: '1', name: '陳小明', student_no: '2025001', class: '1A', gender: 'M', enrollment_date: '2025-09-01', status: 'active' },
+  { id: '2', name: '李美美', student_no: '2025002', class: '1A', gender: 'F', enrollment_date: '2025-09-01', status: 'active' },
+  { id: '3', name: '張大文', student_no: '2025003', class: '1B', gender: 'M', enrollment_date: '2025-09-01', status: 'active' },
+  { id: '4', name: '王小红', student_no: '2025004', class: '1B', gender: 'F', enrollment_date: '2025-09-01', status: 'active' },
+  { id: '5', name: '劉志偉', student_no: '2024001', class: '2A', gender: 'M', enrollment_date: '2024-09-01', status: 'active' },
+  { id: '6', name: '黃淑芬', student_no: '2024002', class: '2A', gender: 'F', enrollment_date: '2024-09-01', status: 'active' },
+  { id: '7', name: '周杰倫', student_no: '2024003', class: '2B', gender: 'M', enrollment_date: '2024-09-01', status: 'inactive' },
+  { id: '8', name: '吳依琳', student_no: '2023001', class: '3A', gender: 'F', enrollment_date: '2023-09-01', status: 'active' },
+  { id: '9', name: '孫雅琪', student_no: '2023002', class: '3A', gender: 'F', enrollment_date: '2023-09-01', status: 'active' },
+  { id: '10', name: '鄭宇翔', student_no: '2023003', class: '3B', gender: 'M', enrollment_date: '2023-09-01', status: 'active' },
+];
+
+const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
+const statusMap = {
+  active: { label: '在讀', color: 'bg-green-100 text-green-700' },
+  inactive: { label: '休學', color: 'bg-gray-100 text-gray-700' },
+  graduated: { label: '畢業', color: 'bg-blue-100 text-blue-700' },
+};
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterGrade, setFilterGrade] = useState<string>('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
-  const students: Student[] = [
-    { id: '1', student_no: 'S2024001', name_zh: '陳小明', name_en: 'Chan Ming', gender: 'M', class_name: '1A', grade: 1, enrollment_date: '2024-09-01', status: 'active' },
-    { id: '2', student_no: 'S2024002', name_zh: '李小華', name_en: 'Lee Hua', gender: 'M', class_name: '1A', grade: 1, enrollment_date: '2024-09-01', status: 'active' },
-    { id: '3', student_no: 'S2023051', name_zh: '王美麗', name_en: 'Wang Mei', gender: 'F', class_name: '2B', grade: 2, enrollment_date: '2023-09-01', status: 'active' },
-    { id: '4', student_no: 'S2024045', name_zh: '張偉', name_en: 'Zhang Wei', gender: 'M', class_name: '3C', grade: 3, enrollment_date: '2024-09-01', status: 'active' },
-    { id: '5', student_no: 'S2022089', name_zh: '劉靜', name_en: 'Liu Jing', gender: 'F', class_name: '4D', grade: 4, enrollment_date: '2022-09-01', status: 'active' },
-  ];
-
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch = 
-      student.name_zh.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredStudents = mockStudents.filter((student) => {
+    const matchesSearch =
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.student_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGrade = !filterGrade || student.grade === parseInt(filterGrade);
-    return matchesSearch && matchesGrade;
+    const matchesClass = !filterClass || student.class === filterClass;
+    const matchesStatus = !filterStatus || student.status === filterStatus;
+    return matchesSearch && matchesClass && matchesStatus;
   });
+
+  const activeStudents = mockStudents.filter((s) => s.status === 'active').length;
+  const totalStudents = mockStudents.length;
 
   return (
     <>
-      <Topbar 
-        title="學生管理"
-        breadcrumbs={[
-          { name: 'Apple 子系統', href: '/dashboard/apple' },
-          { name: '學生管理' },
-        ]}
-      />
-      
+      <Topbar title="學生管理" />
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -65,13 +65,16 @@ export default function StudentsPage() {
             <p className="text-sm text-gray-500 mt-1">管理學生資料、出席記錄和證明文件</p>
           </div>
           <div className="flex gap-3">
+            <Link
+              href="/dashboard/apple/students/import"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <Upload className="w-4 h-4" />
+              批量導入
+            </Link>
             <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
               <Download className="w-4 h-4" />
               匯出名單
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-              <Upload className="w-4 h-4" />
-              批量導入
             </button>
             <Link
               href="/dashboard/apple/students/new"
@@ -84,16 +87,53 @@ export default function StudentsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {[1, 2, 3, 4, 5].map((grade) => {
-            const count = students.filter(s => s.grade === grade).length;
-            return (
-              <div key={grade} className="bg-white rounded-lg border border-gray-200 p-4">
-                <p className="text-sm text-gray-500">一年級</p>
-                <p className="text-2xl font-bold text-gray-900">{count} 人</p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-primary-50">
+                <Users className="w-6 h-6 text-primary-600" />
               </div>
-            );
-          })}
+              <div>
+                <p className="text-sm text-gray-500">學生總數</p>
+                <p className="text-2xl font-bold text-gray-900">{totalStudents}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-green-50">
+                <UserCheck className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">在讀學生</p>
+                <p className="text-2xl font-bold text-green-600">{activeStudents}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-yellow-50">
+                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">休學學生</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {totalStudents - activeStudents}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-blue-50">
+                <FileText className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">班別數量</p>
+                <p className="text-2xl font-bold text-gray-900">{classes.length}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
@@ -109,18 +149,31 @@ export default function StudentsPage() {
                 className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
-            
+
             <select
-              value={filterGrade}
-              onChange={(e) => setFilterGrade(e.target.value)}
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="">全部年級</option>
-              <option value="1">一年級</option>
-              <option value="2">二年級</option>
-              <option value="3">三年級</option>
-              <option value="4">四年級</option>
-              <option value="5">五年級</option>
+              <option value="">全部班別</option>
+              {classes.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">全部狀態</option>
+              {Object.entries(statusMap).map(([key, { label }]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -137,10 +190,10 @@ export default function StudentsPage() {
                   姓名
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  班級
+                  班別
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  年級
+                  性別
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   入學日期
@@ -168,50 +221,41 @@ export default function StudentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
-                          <User className="w-4 h-4 text-primary-600" />
+                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary-600">
+                            {student.name.charAt(0)}
+                          </span>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{student.name_zh}</p>
-                          {student.name_en && (
-                            <p className="text-xs text-gray-500">{student.name_en}</p>
-                          )}
-                        </div>
+                        <span className="text-sm font-medium text-gray-900">{student.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {student.class_name}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {student.class}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {student.gender === 'M' ? '男' : '女'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.grade} 年級
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(student.enrollment_date)}
+                      {student.enrollment_date}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        student.status === 'active' ? 'bg-green-100 text-green-700' :
-                        student.status === 'graduated' ? 'bg-blue-100 text-blue-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {studentStatusLabels[student.status] || student.status}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusMap[student.status as keyof typeof statusMap].color}`}>
+                        {statusMap[student.status as keyof typeof statusMap].label}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/dashboard/apple/students/${student.id}`}
-                          className="p-1 text-gray-400 hover:text-primary-600"
-                          title="查看"
+                          className="p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100"
                         >
-                          <User className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </Link>
                         <Link
-                          href={`/dashboard/apple/students/${student.id}/certificates`}
-                          className="p-1 text-gray-400 hover:text-primary-600"
-                          title="證明文件"
+                          href={`/dashboard/apple/students/${student.id}/edit`}
+                          className="p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100"
                         >
-                          <FileText className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </Link>
                       </div>
                     </td>
