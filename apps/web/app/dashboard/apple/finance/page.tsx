@@ -12,7 +12,9 @@ import {
   Eye,
   Edit,
   Trash2,
+  Camera,
 } from 'lucide-react';
+import UploadReceiptDialog from '@/components/modules/apple/UploadReceiptDialog';
 
 // Mock data
 const mockIncome = [
@@ -47,6 +49,7 @@ export default function FinancePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showIncomeDialog, setShowIncomeDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showUploadReceiptDialog, setShowUploadReceiptDialog] = useState(false);
 
   const filteredIncome = mockIncome.filter((item) =>
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -75,18 +78,30 @@ export default function FinancePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">財務概覽</h2>
-            <p className="text-sm text-gray-500 mt-1">管理收入、支出和財務統計</p>
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>財務概覽</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>管理收入、支出和財務統計</p>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}>
               <Download className="w-4 h-4" />
               匯出報表
             </button>
+            {activeTab === 'income' && (
+              <button
+                onClick={() => setShowUploadReceiptDialog(true)}
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
+              >
+                <Camera className="w-4 h-4" />
+                OCR 識別
+              </button>
+            )}
             {activeTab === 'income' ? (
               <button
                 onClick={() => setShowIncomeDialog(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+                style={{ backgroundColor: 'var(--brand)' }}
               >
                 <Plus className="w-4 h-4" />
                 記錄收入
@@ -94,7 +109,8 @@ export default function FinancePage() {
             ) : activeTab === 'expense' ? (
               <button
                 onClick={() => setShowExpenseDialog(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+                style={{ backgroundColor: 'var(--brand)' }}
               >
                 <Plus className="w-4 h-4" />
                 記錄支出
@@ -105,36 +121,37 @@ export default function FinancePage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-green-50">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--good-bg)' }}>
+                <TrendingUp className="w-6 h-6" style={{ color: 'var(--good)' }} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">總收入</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalIncome)}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>總收入</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{formatCurrency(totalIncome)}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-red-50">
-                <TrendingDown className="w-6 h-6 text-red-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--danger-bg)' }}>
+                <TrendingDown className="w-6 h-6" style={{ color: 'var(--danger)' }} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">總支出</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalExpense)}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>總支出</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{formatCurrency(totalExpense)}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-blue-50">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--info-bg)' }}>
+                <FileText className="w-6 h-6" style={{ color: 'var(--info)' }} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">結餘</p>
-                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>結餘</p>
+                <p className="text-2xl font-bold"
+                  style={{ color: balance >= 0 ? 'var(--good)' : 'var(--danger)' }}>
                   {formatCurrency(balance)}
                 </p>
               </div>
@@ -143,36 +160,36 @@ export default function FinancePage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="border-b border-gray-200">
+        <div className="rounded-lg" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+          <div style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
             <nav className="flex -mb-px">
               <button
                 onClick={() => setActiveTab('income')}
-                className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                  activeTab === 'income'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className="px-6 py-3 text-sm font-medium border-b-2"
+                style={{
+                  borderColor: activeTab === 'income' ? 'var(--brand)' : 'transparent',
+                  color: activeTab === 'income' ? 'var(--brand)' : 'var(--muted)',
+                }}
               >
                 收入記錄
               </button>
               <button
                 onClick={() => setActiveTab('expense')}
-                className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                  activeTab === 'expense'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className="px-6 py-3 text-sm font-medium border-b-2"
+                style={{
+                  borderColor: activeTab === 'expense' ? 'var(--brand)' : 'transparent',
+                  color: activeTab === 'expense' ? 'var(--brand)' : 'var(--muted)',
+                }}
               >
                 支出記錄
               </button>
               <button
                 onClick={() => setActiveTab('report')}
-                className={`px-6 py-3 text-sm font-medium border-b-2 ${
-                  activeTab === 'report'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className="px-6 py-3 text-sm font-medium border-b-2"
+                style={{
+                  borderColor: activeTab === 'report' ? 'var(--brand)' : 'transparent',
+                  color: activeTab === 'report' ? 'var(--brand)' : 'var(--muted)',
+                }}
               >
                 統計報表
               </button>
@@ -184,13 +201,14 @@ export default function FinancePage() {
             {activeTab !== 'report' && (
               <div className="mb-4">
                 <div className="relative max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
                   <input
                     type="search"
                     placeholder={`搜索${activeTab === 'income' ? '收入' : '支出'}記錄...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full pl-9 pr-4 py-2 border rounded-md"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}
                   />
                 </div>
               </div>
@@ -198,45 +216,45 @@ export default function FinancePage() {
 
             {activeTab === 'income' && (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full">
+                  <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">類別</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">來源</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">金額</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>日期</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>描述</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>類別</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>來源</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>金額</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>操作</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
                     {filteredIncome.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                        <td colSpan={6} className="px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
                           暫無收入記錄
                         </td>
                       </tr>
                     ) : (
                       filteredIncome.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.description}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                        <tr key={item.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{item.date}</td>
+                          <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>{item.description}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>
                             {incomeCategories.find((c) => c.value === item.category)?.label}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{item.source}</td>
-                          <td className="px-4 py-3 text-sm text-right font-medium text-green-600">
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{item.source}</td>
+                          <td className="px-4 py-3 text-sm text-right font-medium" style={{ color: 'var(--good)' }}>
                             +{formatCurrency(item.amount)}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
                                 <Eye className="w-4 h-4" />
                               </button>
-                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
                                 <Edit className="w-4 h-4" />
                               </button>
-                              <button className="p-1.5 text-gray-500 hover:text-red-600 rounded hover:bg-gray-100">
+                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--danger)' }}>
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -251,45 +269,45 @@ export default function FinancePage() {
 
             {activeTab === 'expense' && (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full">
+                  <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">類別</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">供應商</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">金額</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>日期</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>描述</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>類別</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>供應商</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>金額</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>操作</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
                     {filteredExpense.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                        <td colSpan={6} className="px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
                           暫無支出記錄
                         </td>
                       </tr>
                     ) : (
                       filteredExpense.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.date}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.description}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
+                        <tr key={item.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{item.date}</td>
+                          <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>{item.description}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>
                             {expenseCategories.find((c) => c.value === item.category)?.label}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">{item.vendor}</td>
-                          <td className="px-4 py-3 text-sm text-right font-medium text-red-600">
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{item.vendor}</td>
+                          <td className="px-4 py-3 text-sm text-right font-medium" style={{ color: 'var(--danger)' }}>
                             -{formatCurrency(item.amount)}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
                                 <Eye className="w-4 h-4" />
                               </button>
-                              <button className="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-gray-100">
+                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
                                 <Edit className="w-4 h-4" />
                               </button>
-                              <button className="p-1.5 text-gray-500 hover:text-red-600 rounded hover:bg-gray-100">
+                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--danger)' }}>
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -305,8 +323,8 @@ export default function FinancePage() {
             {activeTab === 'report' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold mb-4">收入分佈</h3>
+                  <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel-soft)' }}>
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>收入分佈</h3>
                     <div className="space-y-3">
                       {incomeCategories.map((cat) => {
                         const catTotal = mockIncome
@@ -315,14 +333,14 @@ export default function FinancePage() {
                         const percentage = totalIncome > 0 ? (catTotal / totalIncome) * 100 : 0;
                         return (
                           <div key={cat.value}>
-                            <div className="flex justify-between text-sm mb-1">
+                            <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--text)' }}>
                               <span>{cat.label}</span>
                               <span>{formatCurrency(catTotal)} ({percentage.toFixed(1)}%)</span>
                             </div>
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
                               <div
-                                className="h-full bg-green-500 rounded-full"
-                                style={{ width: `${percentage}%` }}
+                                className="h-full rounded-full"
+                                style={{ width: `${percentage}%`, backgroundColor: 'var(--good)' }}
                               />
                             </div>
                           </div>
@@ -330,8 +348,8 @@ export default function FinancePage() {
                       })}
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold mb-4">支出分佈</h3>
+                  <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel-soft)' }}>
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>支出分佈</h3>
                     <div className="space-y-3">
                       {expenseCategories.map((cat) => {
                         const catTotal = mockExpense
@@ -340,14 +358,14 @@ export default function FinancePage() {
                         const percentage = totalExpense > 0 ? (catTotal / totalExpense) * 100 : 0;
                         return (
                           <div key={cat.value}>
-                            <div className="flex justify-between text-sm mb-1">
+                            <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--text)' }}>
                               <span>{cat.label}</span>
                               <span>{formatCurrency(catTotal)} ({percentage.toFixed(1)}%)</span>
                             </div>
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
                               <div
-                                className="h-full bg-red-500 rounded-full"
-                                style={{ width: `${percentage}%` }}
+                                className="h-full rounded-full"
+                                style={{ width: `${percentage}%`, backgroundColor: 'var(--danger)' }}
                               />
                             </div>
                           </div>
@@ -377,6 +395,16 @@ export default function FinancePage() {
           onClose={() => setShowExpenseDialog(false)}
         />
       )}
+
+      {/* Upload Receipt Dialog */}
+      <UploadReceiptDialog
+        isOpen={showUploadReceiptDialog}
+        onClose={() => setShowUploadReceiptDialog(false)}
+        onSubmit={(data) => {
+          alert(`已識別：金額 HK$${data.amount}，日期 ${data.date}，付款人 ${data.payer}，用途 ${data.purpose}`);
+          setShowUploadReceiptDialog(false);
+        }}
+      />
     </>
   );
 }
@@ -397,6 +425,18 @@ function RecordDialog({
     vendor: '',
   });
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 12px',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+    borderRadius: '6px',
+    backgroundColor: 'var(--panel)',
+    color: 'var(--text)',
+    outline: 'none',
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert(`${type === 'income' ? '收入' : '支出'}記錄已保存`);
@@ -404,51 +444,51 @@ function RecordDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--panel)' }}>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>
           {type === 'income' ? '記錄收入' : '記錄支出'}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">日期</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>日期</label>
             <input
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              style={inputStyle}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>描述</label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              style={inputStyle}
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">金額 (HKD)</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>金額 (HKD)</label>
               <input
                 type="number"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={inputStyle}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">類別</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>類別</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={inputStyle}
               >
                 {type === 'income'
                   ? incomeCategories.map((cat) => (
@@ -463,22 +503,22 @@ function RecordDialog({
 
           {type === 'income' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">來源</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>來源</label>
               <input
                 type="text"
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={inputStyle}
               />
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">供應商</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>供應商</label>
               <input
                 type="text"
                 value={formData.vendor}
                 onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={inputStyle}
               />
             </div>
           )}
@@ -487,13 +527,15 @@ function RecordDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 border rounded-md hover:opacity-80"
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             >
               取消
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              className="px-4 py-2 text-white rounded-md hover:opacity-90"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               保存
             </button>

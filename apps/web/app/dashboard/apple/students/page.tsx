@@ -31,11 +31,6 @@ const mockStudents = [
 ];
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
-const statusMap = {
-  active: { label: '在讀', color: 'bg-green-100 text-green-700' },
-  inactive: { label: '休學', color: 'bg-gray-100 text-gray-700' },
-  graduated: { label: '畢業', color: 'bg-blue-100 text-blue-700' },
-};
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,24 +56,27 @@ export default function StudentsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">學生列表</h2>
-            <p className="text-sm text-gray-500 mt-1">管理學生資料、出席記錄和證明文件</p>
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>學生列表</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>管理學生資料、出席記錄和證明文件</p>
           </div>
           <div className="flex gap-3">
             <Link
               href="/dashboard/apple/students/import"
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
             >
               <Upload className="w-4 h-4" />
               批量導入
             </Link>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}>
               <Download className="w-4 h-4" />
               匯出名單
             </button>
             <Link
               href="/dashboard/apple/students/new"
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               <Plus className="w-4 h-4" />
               新增學生
@@ -88,72 +86,74 @@ export default function StudentsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-primary-50">
-                <Users className="w-6 h-6 text-primary-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
+                <Users className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">學生總數</p>
-                <p className="text-2xl font-bold text-gray-900">{totalStudents}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>學生總數</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{totalStudents}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-green-50">
-                <UserCheck className="w-6 h-6 text-green-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
+                <UserCheck className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">在讀學生</p>
-                <p className="text-2xl font-bold text-green-600">{activeStudents}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>在讀學生</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--good)' }}>{activeStudents}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-yellow-50">
-                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' }}>
+                <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">休學學生</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>休學學生</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--warning)' }}>
                   {totalStudents - activeStudents}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-blue-50">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--info-bg)', color: 'var(--info)' }}>
+                <FileText className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">班別數量</p>
-                <p className="text-2xl font-bold text-gray-900">{classes.length}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>班別數量</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{classes.length}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
               <input
                 type="search"
                 placeholder="搜索學生姓名或學號..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full pl-9 pr-4 py-2 border rounded-md"
+                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}
               />
             </div>
 
             <select
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border rounded-md"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}
             >
               <option value="">全部班別</option>
               {classes.map((cls) => (
@@ -166,104 +166,109 @@ export default function StudentsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border rounded-md"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}
             >
               <option value="">全部狀態</option>
-              {Object.entries(statusMap).map(([key, { label }]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
+              <option value="active">在讀</option>
+              <option value="inactive">休學</option>
+              <option value="graduated">畢業</option>
             </select>
           </div>
         </div>
 
         {/* Students Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  學號
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  姓名
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  班別
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  性別
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  入學日期
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  狀態
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.length === 0 ? (
+        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                    暫無學生記錄
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    學號
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    姓名
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    班別
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    性別
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    入學日期
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    狀態
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    操作
+                  </th>
                 </tr>
-              ) : (
-                filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                      {student.student_no}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary-600">
-                            {student.name.charAt(0)}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">{student.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {student.class}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {student.gender === 'M' ? '男' : '女'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.enrollment_date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusMap[student.status as keyof typeof statusMap].color}`}>
-                        {statusMap[student.status as keyof typeof statusMap].label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link
-                          href={`/dashboard/apple/students/${student.id}`}
-                          className="p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                        <Link
-                          href={`/dashboard/apple/students/${student.id}/edit`}
-                          className="p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      </div>
+              </thead>
+              <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                      暫無學生記錄
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredStudents.map((student) => (
+                    <tr key={student.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono" style={{ color: 'var(--text)' }}>
+                        {student.student_no}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
+                            <span className="text-sm font-medium">
+                              {student.name.charAt(0)}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>{student.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--muted)' }}>
+                        {student.class}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--muted)' }}>
+                        {student.gender === 'M' ? '男' : '女'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--muted)' }}>
+                        {student.enrollment_date}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full"
+                          style={{ backgroundColor: student.status === 'active' ? 'var(--good-bg)' : 'var(--warning-bg)', color: student.status === 'active' ? 'var(--good)' : 'var(--warning)' }}>
+                          {student.status === 'active' ? '在讀' : '休學'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/dashboard/apple/students/${student.id}`}
+                            className="p-2 rounded-md hover:opacity-70"
+                            style={{ color: 'var(--brand)' }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <Link
+                            href={`/dashboard/apple/students/${student.id}/edit`}
+                            className="p-2 rounded-md hover:opacity-70"
+                            style={{ color: 'var(--brand)' }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </>

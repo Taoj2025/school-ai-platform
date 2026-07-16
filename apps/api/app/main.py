@@ -11,6 +11,7 @@ from .modules.apple.assets.router import router as apple_assets_router
 from .modules.apple.awards.router import router as apple_awards_router
 from .modules.apple.finance.router import router as apple_finance_router
 from .modules.apple.students.router import router as apple_students_router
+from .modules.approvals.router import router as approvals_router
 from .modules.audit.router import router as audit_router
 from .modules.files.router import router as files_router
 from .modules.ocr.router import router as ocr_router
@@ -43,6 +44,7 @@ app.add_middleware(
 app.include_router(files_router, prefix=settings.API_V1_PREFIX)
 app.include_router(ocr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(ai_router, prefix=settings.API_V1_PREFIX)
+app.include_router(approvals_router, prefix=settings.API_V1_PREFIX)
 app.include_router(audit_router, prefix=settings.API_V1_PREFIX)
 app.include_router(apple_awards_router, prefix=settings.API_V1_PREFIX)
 app.include_router(apple_finance_router, prefix=settings.API_V1_PREFIX)

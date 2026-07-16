@@ -5,6 +5,19 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, FileText, Download, Eye, Check } from 'lucide-react';
 
+// Common input style using CSS variables
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '8px 12px',
+  borderWidth: '1px',
+  borderStyle: 'solid',
+  borderColor: 'var(--border)',
+  borderRadius: '6px',
+  backgroundColor: 'var(--panel)',
+  color: 'var(--text)',
+  outline: 'none',
+};
+
 // Mock students data
 const mockStudents = [
   { id: '1', name: '陳小明', class: '1A', student_no: '2025001' },
@@ -70,20 +83,22 @@ export default function GenerateCertificatesPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard/apple/awards"
-              className="p-2 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100"
+              className="p-2 rounded-md hover:opacity-70"
+              style={{ color: 'var(--muted)' }}
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">批量生成獎狀</h2>
-              <p className="text-sm text-gray-500 mt-1">選擇學生並批量生成獎狀 PDF</p>
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>批量生成獎狀</h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>選擇學生並批量生成獎狀 PDF</p>
             </div>
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleGenerate}
               disabled={selectedStudents.length === 0 || generating}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: 'var(--brand)', color: 'var(--panel)' }}
             >
               <FileText className="w-4 h-4" />
               {generating ? '生成中...' : '生成 PDF'}
@@ -92,16 +107,16 @@ export default function GenerateCertificatesPage() {
         </div>
 
         {/* Award Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                 獎項名稱
               </label>
               <select
                 value={awardName}
                 onChange={(e) => setAwardName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={inputStyle}
               >
                 <option value="學業優異獎">學業優異獎</option>
                 <option value="品行優良獎">品行優良獎</option>
@@ -111,10 +126,10 @@ export default function GenerateCertificatesPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                 已選擇
               </label>
-              <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
+              <div className="px-3 py-2 rounded-md" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)' }}>
                 {selectedStudents.length} 名學生
               </div>
             </div>
@@ -123,12 +138,12 @@ export default function GenerateCertificatesPage() {
 
         {/* Generated Status */}
         {generated && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-green-700">
+          <div className="rounded-lg p-4 flex items-center justify-between" style={{ backgroundColor: 'var(--good-bg)', borderWidth: '1px', borderColor: 'var(--good)' }}>
+            <div className="flex items-center gap-2" style={{ color: 'var(--good)' }}>
               <Check className="w-5 h-5" />
               <span>已成功生成 {selectedStudents.length} 份獎狀</span>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90" style={{ backgroundColor: 'var(--good)', color: 'var(--panel)' }}>
               <Download className="w-4 h-4" />
               下載全部
             </button>
@@ -136,62 +151,66 @@ export default function GenerateCertificatesPage() {
         )}
 
         {/* Student List */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+          <div className="p-4" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)' }}>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selectAll}
                 onChange={handleSelectAll}
-                className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                className="w-4 h-4 rounded"
+                style={{ accentColor: 'var(--brand)' }}
               />
-              <span className="text-sm font-medium text-gray-700">全選</span>
+              <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>全選</span>
             </label>
           </div>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                  選擇
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  學號
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  姓名
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  班別
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider w-12" style={{ color: 'var(--muted)' }}>
+                    選擇
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    學號
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    姓名
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    班別
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                    操作
+                  </th>
+                </tr>
+              </thead>
+              <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
               {mockStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50">
+                <tr key={student.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={selectedStudents.includes(student.id)}
                       onChange={() => handleSelectStudent(student.id)}
-                      className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: 'var(--brand)' }}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text)' }}>
                     {student.student_no}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{ color: 'var(--text)' }}>
                     {student.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--muted)' }}>
                     {student.class}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handlePreview(student.id)}
-                      className="p-2 text-gray-500 hover:text-primary-600 rounded-md hover:bg-gray-100"
+                      className="p-2 rounded hover:opacity-70"
+                      style={{ color: 'var(--brand)' }}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -200,6 +219,7 @@ export default function GenerateCertificatesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </>

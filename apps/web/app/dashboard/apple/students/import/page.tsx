@@ -26,7 +26,6 @@ export default function ImportStudentsPage() {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      // Simulate parsing
       simulateImport();
     }
   };
@@ -73,13 +72,14 @@ export default function ImportStudentsPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/apple/students"
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100"
+            className="p-2 rounded-md hover:opacity-70"
+            style={{ color: 'var(--muted)' }}
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">批量導入學生</h2>
-            <p className="text-sm text-gray-500 mt-1">上傳 Excel 或 CSV 文件批量導入學生資料</p>
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>批量導入學生</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>上傳 Excel 或 CSV 文件批量導入學生資料</p>
           </div>
         </div>
 
@@ -93,9 +93,11 @@ export default function ImportStudentsPage() {
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-              dragOver ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-500 hover:bg-gray-50'
-            }`}
+            className="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors"
+            style={{
+              borderColor: dragOver ? 'var(--brand)' : 'var(--border)',
+              backgroundColor: dragOver ? 'var(--brand-light)' : 'var(--panel)',
+            }}
           >
             <input
               ref={fileInputRef}
@@ -104,11 +106,11 @@ export default function ImportStudentsPage() {
               onChange={handleFileChange}
               className="hidden"
             />
-            <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">
+            <Upload className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--muted)' }} />
+            <p className="text-lg font-medium mb-2" style={{ color: 'var(--text)' }}>
               拖放文件到這裡，或點擊上傳
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>
               支持 .xlsx 和 .csv 格式
             </p>
           </div>
@@ -116,9 +118,9 @@ export default function ImportStudentsPage() {
 
         {/* Uploading State */}
         {uploading && (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <div className="w-12 h-12 mx-auto border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-lg font-medium text-gray-900">正在解析文件...</p>
+          <div className="rounded-lg p-12 text-center" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+            <div className="w-12 h-12 mx-auto border-4 rounded-full animate-spin mb-4" style={{ borderColor: 'var(--brand)', borderTopColor: 'transparent' }} />
+            <p className="text-lg font-medium" style={{ color: 'var(--text)' }}>正在解析文件...</p>
           </div>
         )}
 
@@ -126,22 +128,22 @@ export default function ImportStudentsPage() {
         {imported.length > 0 && (
           <div className="space-y-4">
             {/* File Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
+            <div className="rounded-lg p-4 flex items-center justify-between" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-green-600" />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
+                  <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{file?.name}</p>
-                  <p className="text-sm text-gray-500">{imported.length} 行資料</p>
+                  <p className="font-medium" style={{ color: 'var(--text)' }}>{file?.name}</p>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>{imported.length} 行資料</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1 text-green-600">
+                <span className="flex items-center gap-1" style={{ color: 'var(--good)' }}>
                   <Check className="w-4 h-4" />
                   {imported.filter((s) => s.status === 'success').length} 成功
                 </span>
-                <span className="flex items-center gap-1 text-red-600">
+                <span className="flex items-center gap-1" style={{ color: 'var(--danger)' }}>
                   <X className="w-4 h-4" />
                   {imported.filter((s) => s.status === 'error').length} 失敗
                 </span>
@@ -149,38 +151,38 @@ export default function ImportStudentsPage() {
             </div>
 
             {/* Preview Table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="font-medium text-gray-900">預覽</h3>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+              <div className="p-4" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)' }}>
+                <h3 className="font-medium" style={{ color: 'var(--text)' }}>預覽</h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full">
+                  <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">行號</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">學號</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">姓名</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">班別</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">性別</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">狀態</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>行號</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>學號</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>姓名</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>班別</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>性別</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>狀態</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
                     {imported.map((student) => (
-                      <tr key={student.row} className={student.status === 'error' ? 'bg-red-50' : ''}>
-                        <td className="px-4 py-3 text-sm text-gray-500">{student.row}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-gray-900">{student.student_no}</td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{student.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{student.class}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{student.gender === 'M' ? '男' : '女'}</td>
+                      <tr key={student.row} style={{ borderBottomWidth: '1px', borderColor: 'var(--border)', backgroundColor: student.status === 'error' ? 'var(--danger-bg)' : undefined }}>
+                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{student.row}</td>
+                        <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--text)' }}>{student.student_no}</td>
+                        <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>{student.name}</td>
+                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{student.class}</td>
+                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{student.gender === 'M' ? '男' : '女'}</td>
                         <td className="px-4 py-3">
                           {student.status === 'success' ? (
-                            <span className="flex items-center gap-1 text-green-600">
+                            <span className="flex items-center gap-1" style={{ color: 'var(--good)' }}>
                               <Check className="w-4 h-4" />
                               準備導入
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-red-600">
+                            <span className="flex items-center gap-1" style={{ color: 'var(--danger)' }}>
                               <AlertCircle className="w-4 h-4" />
                               {student.error}
                             </span>
@@ -197,7 +199,8 @@ export default function ImportStudentsPage() {
             <div className="flex items-center justify-between">
               <button
                 onClick={downloadTemplate}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+                style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
               >
                 <Download className="w-4 h-4" />
                 下載範本
@@ -208,13 +211,15 @@ export default function ImportStudentsPage() {
                     setImported([]);
                     setFile(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-lg hover:opacity-80"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
                 >
                   取消
                 </button>
                 <button
                   onClick={handleImport}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                  className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+                  style={{ backgroundColor: 'var(--brand)' }}
                 >
                   <Check className="w-4 h-4" />
                   確認導入

@@ -21,6 +21,18 @@ export default function NewStudentPage() {
     address: '',
   });
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 12px',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+    borderRadius: '6px',
+    backgroundColor: 'var(--panel)',
+    color: 'var(--text)',
+    outline: 'none',
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert('學生已添加');
@@ -33,53 +45,54 @@ export default function NewStudentPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/apple/students"
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100"
+            className="p-2 rounded-md hover:opacity-70"
+            style={{ color: 'var(--muted)' }}
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">新增學生</h2>
-            <p className="text-sm text-gray-500 mt-1">添加新的學生記錄</p>
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>新增學生</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>添加新的學生記錄</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6">
+        <form onSubmit={handleSubmit} className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">基本信息</h3>
+              <h3 className="text-lg font-medium mb-4" style={{ color: 'var(--text)' }}>基本信息</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    姓名 <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                    姓名 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    學號 <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                    學號 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.student_no}
                     onChange={(e) => setFormData({ ...formData, student_no: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    班別 <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                    班別 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
                     value={formData.class}
                     onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   >
                     {classes.map((cls) => (
                       <option key={cls} value={cls}>{cls}</option>
@@ -87,105 +100,107 @@ export default function NewStudentPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    性別 <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                    性別 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   >
                     <option value="M">男</option>
                     <option value="F">女</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                     出生日期
                   </label>
                   <input
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                     身份證號碼
                   </label>
                   <input
                     type="text"
                     value={formData.id_number}
                     onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    入學日期 <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                    入學日期 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <input
                     type="date"
                     value={formData.enrollment_date}
                     onChange={(e) => setFormData({ ...formData, enrollment_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                     required
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">監護人信息</h3>
+            <div style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
+              <h3 className="text-lg font-medium mb-4 pt-6" style={{ color: 'var(--text)' }}>監護人信息</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                     監護人姓名
                   </label>
                   <input
                     type="text"
                     value={formData.parent_name}
                     onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                     聯絡電話
                   </label>
                   <input
                     type="tel"
                     value={formData.parent_phone}
                     onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
                     住址
                   </label>
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={inputStyle}
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-6 mt-6" style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
             <Link
               href="/dashboard/apple/students"
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 border rounded-md hover:opacity-80"
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             >
               取消
             </Link>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-md hover:opacity-90"
+              style={{ backgroundColor: 'var(--brand)' }}
             >
               <Save className="w-4 h-4" />
               保存
