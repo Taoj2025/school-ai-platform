@@ -1,6 +1,14 @@
 from pydantic import BaseModel
 from typing import Optional, Literal
 from datetime import datetime, date
+from enum import Enum
+
+
+class ExportFormat(str, Enum):
+    """Export format options"""
+    CSV = "csv"
+    EXCEL = "excel"
+    PDF = "pdf"
 
 
 class AwardCreate(BaseModel):

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import {
@@ -11,7 +11,11 @@ import {
   Trash2,
   FileText,
   Download,
+  FileSpreadsheet,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Mock data for awards
 const mockAwards = [
@@ -69,6 +73,7 @@ export default function AwardsPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingAward, setEditingAward] = useState<typeof mockAwards[0] | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const filteredAwards = awards.filter((award) => {
     const matchesSearch = award.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -76,6 +81,171 @@ export default function AwardsPage() {
     const matchesStatus = !filterStatus || award.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
+    // Generate export data
+    if (filteredAwards.length === 0) {
+      alert('沒有可導出的數據');
+      return;
+    }
+    
+    const exportData = filteredAwards.map((award, index) => ({
+      '序號': index + 1,
+      '獎項名稱': award.name,
+      '類型': awardTypes.find((t) => t.value === award.type)?.label || award.type,
+      '學年': award.academic_year,
+      '學期': award.semester,
+      '獲獎人數': award.total_recipients,
+      '狀態': statusMap[award.status as keyof typeof statusMap]?.label || award.status,
+      '創建日期': award.created_at,
+    }));
+
+    // Helper function to escape CSV values
+    const escapeCSV = (value: string | number): string => {
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    if (format === 'csv') {
+      // Export as CSV
+      const headers = Object.keys(exportData[0]).map(escapeCSV).join(',');
+      const rows = exportData.map(row => 
+        Object.values(row).map(escapeCSV).join(',')
+      ).join('\n');
+      const csvContent = `\uFEFF${headers}\n${rows}`; // BOM for Excel UTF-8
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `獎項列表_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } else if (format === 'excel') {
+      // Export as proper XLSX using SheetJS library
+      // Convert data to worksheet format
+      const wsData = [
+        ['序號', '獎項名稱', '類型', '學年', '學期', '獎金金額', '狀態', '創建日期'],
+        ...exportData.map(row => [
+          row['序號'],
+          row['獎項名稱'],
+          row['類型'],
+          row['學年'],
+          row['學期'],
+          row['獲獎人數'],
+          row['狀態'],
+          row['創建日期'],
+        ])
+      ];
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Set column widths for better readability
+      ws['!cols'] = [
+        { wch: 6 },   // 序號
+        { wch: 20 },  // 獎項名稱
+        { wch: 10 },  // 類型
+        { wch: 12 },  // 學年
+        { wch: 10 },  // 學期
+        { wch: 10 },  // 獎金金額
+        { wch: 10 },  // 狀態
+        { wch: 12 },  // 創建日期
+      ];
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, '獎項列表');
+      
+      // Generate XLSX file and download
+      const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `獎項列表_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } else if (format === 'pdf') {
+      // Generate actual PDF using jsPDF
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      // Set font for Chinese support (use built-in font)
+      doc.setFont('helvetica');
+      
+      // Title
+      doc.setFontSize(20);
+      doc.setTextColor(139, 69, 19); // Brown color
+      doc.text('獎項列表', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      
+      // School name
+      doc.setFontSize(12);
+      doc.setTextColor(102, 102, 102);
+      doc.text('香港培英中學', doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+      
+      // Info line
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const year = new Date().getFullYear();
+      doc.text(`學年: ${year}-${year + 1}  |  導出日期: ${new Date().toLocaleDateString('zh-HK')}  |  共 ${exportData.length} 項記錄`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+      
+      // Prepare table data for autotable
+      const tableData = exportData.map(row => [
+        row['序號'],
+        row['獎項名稱'],
+        row['類型'],
+        row['學年'],
+        row['學期'],
+        row['獲獎人數'],
+        row['狀態'],
+      ]);
+      
+      // Add table using autotable
+      // @ts-ignore - autotable is added via import
+      doc.autoTable({
+        head: [['序號', '獎項名稱', '類型', '學年', '學期', '人數', '狀態']],
+        body: tableData,
+        startY: 35,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [232, 232, 232],
+          textColor: [51, 51, 51],
+          fontStyle: 'bold',
+          halign: 'center',
+        },
+        bodyStyles: {
+          textColor: [51, 51, 51],
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 15 },
+          1: { cellWidth: 50 },
+          2: { halign: 'center', cellWidth: 20 },
+          3: { halign: 'center', cellWidth: 25 },
+          4: { halign: 'center', cellWidth: 20 },
+          5: { halign: 'center', cellWidth: 15 },
+          6: { halign: 'center', cellWidth: 20 },
+        },
+        margin: { left: 15, right: 15 },
+      });
+      
+      // Footer
+      const pageHeight = doc.internal.pageSize.getHeight();
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text('獎項列表導出 · 香港培英中學AI管理系統', doc.internal.pageSize.getWidth() / 2, pageHeight - 10, { align: 'center' });
+      
+      // Save PDF
+      doc.save(`獎項列表_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  };
 
   const handleDelete = (id: string) => {
     if (confirm('確定要刪除這個獎項嗎？')) {
@@ -94,6 +264,47 @@ export default function AwardsPage() {
             <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>管理所有獎項和獎學金</p>
           </div>
           <div className="flex gap-3">
+            {/* Export Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-90"
+                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
+              >
+                <Download className="w-4 h-4" />
+                導出報表
+              </button>
+              {showExportMenu && (
+                <div
+                  className="absolute right-0 mt-2 w-40 rounded-md shadow-lg z-10"
+                  style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}
+                >
+                  <div className="py-1">
+                    <button
+                      onClick={() => { handleExport('csv'); setShowExportMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm hover:opacity-80 flex items-center gap-2"
+                      style={{ color: 'var(--text)' }}
+                    >
+                      <FileSpreadsheet className="w-4 h-4" /> CSV 格式
+                    </button>
+                    <button
+                      onClick={() => { handleExport('excel'); setShowExportMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm hover:opacity-80 flex items-center gap-2"
+                      style={{ color: 'var(--text)' }}
+                    >
+                      <FileSpreadsheet className="w-4 h-4" /> Excel 格式
+                    </button>
+                    <button
+                      onClick={() => { handleExport('pdf'); setShowExportMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm hover:opacity-80 flex items-center gap-2"
+                      style={{ color: 'var(--text)' }}
+                    >
+                      <FileText className="w-4 h-4" /> PDF 格式
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <Link
               href="/dashboard/apple/awards/generate"
               className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-90"

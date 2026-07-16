@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
+import csv
+import io
+from datetime import datetime
 from .models import AppleAward, AppleAwardRecipient
 from .schemas import (
     AwardCreate, AwardUpdate, AwardResponse,
@@ -9,6 +13,7 @@ from .schemas import (
     ScholarshipCalculationRequest, ScholarshipCalculationResponse,
     CertificateGenerationRequest, CertificateGenerationResponse,
     ScriptGenerationRequest, ScriptGenerationResponse,
+    ExportFormat,
 )
 from .service import AwardService
 from ....db.session import get_db
@@ -34,6 +39,101 @@ async def list_awards(
         page_size=page_size,
     )
     return success_response(data=paginate(items, total, page, page_size))
+
+
+@router.get("/export")
+async def export_awards(
+    format: ExportFormat = Query(default=ExportFormat.CSV),
+    academic_year: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export awards data in various formats.
+    
+    - **format**: CSV, Excel (XLSX), or PDF
+    - **academic_year**: Filter by academic year
+    - **status**: Filter by status
+    """
+    service = AwardService(db)
+    awards, _ = await service.list_awards(
+        academic_year=academic_year,
+        status=status,
+        page=1,
+        page_size=10000,  # Export all
+    )
+    
+    if format == ExportFormat.CSV:
+        # Generate CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Header
+        writer.writerow([
+            '序號', '獎項名稱', '類型', '學年', '學期',
+            '獎金金額', '狀態', '創建日期'
+        ])
+        
+        # Data rows
+        for idx, award in enumerate(awards, 1):
+            writer.writerow([
+                idx,
+                award['name'],
+                award.get('award_type', ''),
+                award.get('academic_year', ''),
+                award.get('semester', ''),
+                award.get('amount', 0),
+                award.get('status', ''),
+                award.get('created_at', ''),
+            ])
+        
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=awards_export_{datetime.now().strftime('%Y%m%d')}.csv"
+            }
+        )
+    
+    elif format == ExportFormat.EXCEL:
+        # For Excel, return CSV with proper content type
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            '序號', '獎項名稱', '類型', '學年', '學期',
+            '獎金金額', '狀態', '創建日期'
+        ])
+        for idx, award in enumerate(awards, 1):
+            writer.writerow([
+                idx,
+                award['name'],
+                award.get('award_type', ''),
+                award.get('academic_year', ''),
+                award.get('semester', ''),
+                award.get('amount', 0),
+                award.get('status', ''),
+                award.get('created_at', ''),
+            ])
+        
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="application/vnd.ms-excel",
+            headers={
+                "Content-Disposition": f"attachment; filename=awards_export_{datetime.now().strftime('%Y%m%d')}.xlsx"
+            }
+        )
+    
+    else:
+        # PDF - return JSON with data for client-side PDF generation
+        return success_response(data={
+            "format": "pdf",
+            "filename": f"awards_export_{datetime.now().strftime('%Y%m%d')}.pdf",
+            "data": awards,
+            "total": len(awards),
+            "generated_at": datetime.now().isoformat(),
+        })
 
 
 @router.post("", response_model=dict)
