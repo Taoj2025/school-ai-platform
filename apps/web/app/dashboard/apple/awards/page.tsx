@@ -12,6 +12,7 @@ import {
   FileText,
   Download,
   FileSpreadsheet,
+  DollarSign,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -315,6 +316,14 @@ export default function AwardsPage() {
             >
               <FileText className="w-4 h-4" />
               批量生成
+            </Link>
+            <Link
+              href="/dashboard/apple/awards/students"
+              className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-90"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}
+            >
+              <DollarSign className="w-4 h-4" />
+              學生獎金
             </Link>
             <button
               onClick={() => setShowCreateDialog(true)}
