@@ -1,11 +1,113 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Edit, FileText, Download, User, Award } from 'lucide-react';
 
 // Mock student data
+const mockStudents: Record<string, typeof mockStudent> = {
+  '1': {
+    id: '1',
+    name: '陳小明',
+    student_no: '2025001',
+    class: '1A',
+    gender: 'M',
+    enrollment_date: '2025-09-01',
+    status: 'active',
+    date_of_birth: '2013-05-15',
+    id_number: 'A123456(7)',
+    parent_name: '陳先生',
+    parent_phone: '9876-5432',
+    address: '香港九龍彩虹區彩虹道123號',
+  },
+  '2': {
+    id: '2',
+    name: '李美美',
+    student_no: '2025002',
+    class: '1A',
+    gender: 'F',
+    enrollment_date: '2025-09-01',
+    status: 'active',
+    date_of_birth: '2013-08-22',
+    id_number: 'A234567(8)',
+    parent_name: '李太太',
+    parent_phone: '9123-4567',
+    address: '香港九龍旺角彌敦道456號',
+  },
+  '3': {
+    id: '3',
+    name: '張大文',
+    student_no: '2025003',
+    class: '1B',
+    gender: 'M',
+    enrollment_date: '2025-09-01',
+    status: 'active',
+    date_of_birth: '2013-03-10',
+    id_number: 'A345678(9)',
+    parent_name: '張先生',
+    parent_phone: '9234-5678',
+    address: '香港新界沙田區沙田正街789號',
+  },
+  '4': {
+    id: '4',
+    name: '王小红',
+    student_no: '2025004',
+    class: '1B',
+    gender: 'F',
+    enrollment_date: '2025-09-01',
+    status: 'active',
+    date_of_birth: '2013-11-25',
+    id_number: 'A456789(0)',
+    parent_name: '王太太',
+    parent_phone: '9345-6789',
+    address: '香港港島東區太古城道321號',
+  },
+  '5': {
+    id: '5',
+    name: '劉志偉',
+    student_no: '2024001',
+    class: '2A',
+    gender: 'M',
+    enrollment_date: '2024-09-01',
+    status: 'active',
+    date_of_birth: '2012-07-18',
+    id_number: 'A567890(1)',
+    parent_name: '劉先生',
+    parent_phone: '9456-7890',
+    address: '香港九龍觀塘區觀塘道654號',
+  },
+  '6': {
+    id: '6',
+    name: '黃思婷',
+    student_no: '2024002',
+    class: '2A',
+    gender: 'F',
+    enrollment_date: '2024-09-01',
+    status: 'active',
+    date_of_birth: '2012-04-12',
+    id_number: 'A678901(2)',
+    parent_name: '黃太太',
+    parent_phone: '9567-8901',
+    address: '香港新界元朗區元朗大馬路987號',
+  },
+  '7': {
+    id: '7',
+    name: '周俊宇',
+    student_no: '2024003',
+    class: '2B',
+    gender: 'M',
+    enrollment_date: '2024-09-01',
+    status: 'active',
+    date_of_birth: '2012-09-30',
+    id_number: 'A789012(3)',
+    parent_name: '周先生',
+    parent_phone: '9678-9012',
+    address: '香港港島南區香港仔大道147號',
+  },
+};
+
 const mockStudent = {
   id: '1',
   name: '陳小明',
@@ -39,10 +141,62 @@ const mockCertificates = [
   { name: '操行獎勵證明', issue_date: '2025-06-30', type: 'conduct' },
 ];
 
-export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function StudentDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [activeTab, setActiveTab] = useState<'info' | 'attendance' | 'awards' | 'certificates'>('info');
-  const [student] = useState(mockStudent);
+  const [student, setStudent] = useState(mockStudent);
+  const [loading, setLoading] = useState(true);
+
+  // Load student data based on ID
+  useEffect(() => {
+    if (id) {
+      const studentData = mockStudents[id];
+      if (studentData) {
+        setStudent(studentData);
+      } else {
+        // For other IDs, use default mock data with adjusted ID
+        setStudent({ ...mockStudent, id });
+      }
+      setLoading(false);
+    }
+  }, [id]);
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active': return '在讀';
+      case 'graduated': return '畢業';
+      case 'transferred': return '轉學';
+      case 'suspended': return '休學';
+      default: return status;
+    }
+  };
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'active':
+        return { backgroundColor: 'var(--good-bg)', color: 'var(--good)' };
+      case 'graduated':
+        return { backgroundColor: 'var(--info-bg)', color: 'var(--info)' };
+      case 'transferred':
+        return { backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' };
+      case 'suspended':
+        return { backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' };
+      default:
+        return { backgroundColor: 'var(--panel-soft)', color: 'var(--text)' };
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Topbar title="學生詳情" />
+        <div className="p-6 flex items-center justify-center" style={{ minHeight: '400px' }}>
+          <p style={{ color: 'var(--muted)' }}>載入中...</p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -69,8 +223,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{student.name}</h2>
                   <span className="px-2 py-1 text-xs font-medium rounded-full"
-                    style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
-                    在讀
+                    style={getStatusStyle(student.status)}>
+                    {getStatusLabel(student.status)}
                   </span>
                 </div>
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>
