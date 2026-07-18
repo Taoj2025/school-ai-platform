@@ -69,7 +69,7 @@ export default function GlobalAIAssist() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [currentModule, setCurrentModule] = useState<AIModule>('unknown');
-  const { insertIntoField, context } = useAIContext();
+  const { insertIntoField, activeFieldLabel } = useAIContext();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,6 +142,11 @@ export default function GlobalAIAssist() {
               <span className="text-xs opacity-75 px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
                 {currentModule === 'unknown' ? '通用' : '當前頁面'}
               </span>
+              {activeFieldLabel && (
+                <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                  目標：{activeFieldLabel}
+                </span>
+              )}
             </div>
             <button onClick={() => setIsOpen(false)} className="p-1 rounded hover:bg-white/20">
               <X className="w-5 h-5" />
@@ -241,9 +246,10 @@ export default function GlobalAIAssist() {
                               onClick={() => insertIntoField(msg.content)}
                               className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:opacity-70"
                               style={{ backgroundColor: 'var(--accent)', color: 'white' }}
+                              title={activeFieldLabel ? `插入到：${activeFieldLabel}` : '請先點擊一個輸入框再使用此功能'}
                             >
                               <Wand2 className="w-3 h-3" />
-                              插入字段
+                              {activeFieldLabel ? '插入字段' : '需選擇字段'}
                             </button>
                           </div>
                         )}
@@ -286,7 +292,7 @@ export default function GlobalAIAssist() {
                     </button>
                   </div>
                   <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
-                    按 Enter 發送，AI 會將回覆內容插入到當前聚焦的輸入框
+                    {activeFieldLabel ? "按 Enter 發送，AI 回覆會插入到「" + activeFieldLabel + "」" : '先點擊任意輸入框，AI 回覆將自動插入'}
                   </p>
                 </div>
               </div>

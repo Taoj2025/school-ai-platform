@@ -26,9 +26,7 @@ export default function AIFieldButton({ placeholder, label, onGenerated, classNa
     setOpen(true);
     setResult(null);
     setInput('');
-    if (inputRef.current) {
-      registerField({ current: inputRef.current } as React.RefObject<HTMLInputElement | HTMLTextAreaElement>, label || '一般輸入');
-    }
+    registerField(inputRef.current, label || '一般輸入');
   };
 
   const handleClose = () => {
