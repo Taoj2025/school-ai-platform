@@ -18,6 +18,7 @@ from .modules.apple.students.router import router as apple_students_router
 from .modules.approvals.router import router as approvals_router
 from .modules.audit.router import router as audit_router
 from .modules.files.router import router as files_router
+from .modules.grade.router import router as grade_router
 from .modules.ocr.router import router as ocr_router
 
 
@@ -58,6 +59,7 @@ app.include_router(apple_awards_router, prefix=settings.API_V1_PREFIX)
 app.include_router(apple_finance_router, prefix=settings.API_V1_PREFIX)
 app.include_router(apple_assets_router, prefix=settings.API_V1_PREFIX)
 app.include_router(apple_students_router, prefix=settings.API_V1_PREFIX)
+app.include_router(grade_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health", response_model=dict)

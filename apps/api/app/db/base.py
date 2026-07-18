@@ -11,6 +11,7 @@ from ..modules.apple.awards.models import AppleAward, AppleAwardRecipient
 from ..modules.apple.finance.models import AppleFinanceRecord, AppleQuotation
 from ..modules.apple.assets.models import AppleAsset, AppleAssetMovement
 from ..modules.apple.students.models import AppleStudent, AppleAttendance, AppleCertificateRequest
+from ..modules.grade.models import ExamSession, Score, GeneratedComment, CommentFeedback, RegressionAlert
 
 __all__ = [
     "Base",
@@ -21,4 +22,5 @@ __all__ = [
     "AppleFinanceRecord", "AppleQuotation",
     "AppleAsset", "AppleAssetMovement",
     "AppleStudent", "AppleAttendance", "AppleCertificateRequest",
+    "ExamSession", "Score", "GeneratedComment", "CommentFeedback", "RegressionAlert",
 ]
