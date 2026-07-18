@@ -47,11 +47,11 @@ export default function NewAssetPage() {
     try {
       await api.createAsset({
         name: formData.name,
-        code: formData.code,
+        asset_code: formData.code,
         category: formData.category,
         location: formData.location,
         purchase_date: formData.purchase_date || undefined,
-        value: formData.value ? Number(formData.value) : undefined,
+        purchase_price: formData.value ? Number(formData.value) : undefined,
       });
       window.location.href = '/dashboard/apple/assets';
     } catch (err: any) {
