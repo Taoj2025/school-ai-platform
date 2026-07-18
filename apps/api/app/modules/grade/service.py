@@ -8,9 +8,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from .models import ExamSession, Score, GeneratedComment, CommentFeedback, RegressionAlert
 from .repository import GradeRepository
-from ...workers.ocr_tasks import ocr_exam_paper_unified
-from ...workers.llm_tasks import call_llm_unified
-from ..files.models import File
+
+try:
+    from ...workers.ocr_tasks import ocr_exam_paper_unified
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
+    ocr_exam_paper_unified = None
+
+try:
+    from ...workers.llm_tasks import call_llm_unified
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    call_llm_unified = None
+
+try:
+    from ..files.models import File
+    FILE_MODEL_AVAILABLE = True
+except ImportError:
+    FILE_MODEL_AVAILABLE = False
+    File = None
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +97,9 @@ class GradeService:
         if not exam_session:
             return {"status": "error", "error": "Exam session not found"}
 
+        if not OCR_AVAILABLE:
+            return {"status": "error", "error": "OCR service (Celery) not available"}
+
         try:
             task = ocr_exam_paper_unified.delay(
                 file_id=file_id,
@@ -128,6 +149,9 @@ class GradeService:
         exam_session = await self.repo.get_exam_session(exam_session_id)
         if not exam_session:
             return {"status": "error", "error": "Exam session not found"}
+
+        if not FILE_MODEL_AVAILABLE:
+            return {"status": "error", "error": "File model not available"}
 
         try:
             file_record = await self.db.get(File, file_id)
@@ -268,6 +292,25 @@ class GradeService:
 
         level = self._determine_level(score.percentage)
         prompt = self._build_comment_prompt(score, exam_session, statistics, history, level)
+
+        if not LLM_AVAILABLE:
+            comment = GeneratedComment(
+                exam_session_id=exam_session.id,
+                score_id=score_id,
+                content=prompt,
+                level=level,
+                model="placeholder",
+                confidence=0.0,
+                status="pending_review",
+            )
+            await self.repo.create_generated_comment(comment)
+            return {
+                "status": "completed",
+                "comment_id": comment.id,
+                "content": prompt,
+                "level": level,
+                "note": "LLM not available; raw prompt returned as content",
+            }
 
         try:
             result = call_llm_unified.delay(

@@ -4,6 +4,8 @@ from sqlalchemy import Column, String, DateTime, Text, Integer, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ARRAY
 from ...db.session import Base
+from ..apple.students.models import AppleStudent
+from ..files.models import File  # noqa: F401  (ensures 'files' table is registered in metadata)
 
 
 class ExamSession(Base):

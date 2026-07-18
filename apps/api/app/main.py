@@ -48,8 +48,8 @@ app.add_middleware(
 )
 
 app.include_router(accounts_router, prefix=settings.API_V1_PREFIX)
-app.include_router(announcements_router, prefix=settings.API_V1_PREFIX)
 app.include_router(announcement_templates_router, prefix=settings.API_V1_PREFIX)
+app.include_router(announcements_router, prefix=settings.API_V1_PREFIX)
 app.include_router(files_router, prefix=settings.API_V1_PREFIX)
 app.include_router(ocr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(ai_router, prefix=settings.API_V1_PREFIX)

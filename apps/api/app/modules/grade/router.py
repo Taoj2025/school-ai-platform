@@ -16,7 +16,6 @@ from .schemas import (
     ReportGenerateRequest,
 )
 from .service import GradeService
-from .permissions import GradePermissions
 from ...db.session import get_db
 from ...common.schemas import success_response
 from ...common.pagination import paginate
@@ -53,7 +52,8 @@ async def list_exam_sessions(
         page=page,
         page_size=page_size,
     )
-    return success_response(data=paginate(items, total, page, page_size))
+    serialized = [ExamSessionResponse.model_validate(item).model_dump() for item in items]
+    return success_response(data=paginate(serialized, total, page, page_size))
 
 
 @router.get("/exam-sessions/{session_id}", response_model=dict)
@@ -248,7 +248,8 @@ async def list_generated_comments(
         page=page,
         page_size=page_size,
     )
-    return success_response(data=paginate(items, total, page, page_size))
+    serialized = [GeneratedCommentResponse.model_validate(item).model_dump() for item in items]
+    return success_response(data=paginate(serialized, total, page, page_size))
 
 
 @router.patch("/comments/{comment_id}", response_model=dict)
