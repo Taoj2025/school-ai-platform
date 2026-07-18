@@ -325,3 +325,220 @@ class AssetService:
             "download_url": f"/api/v1/apple/assets/labels/download",
             "total_count": len(labels),
         }
+    
+    async def scan_asset(self, qr_code: str, scan_status: str, remarks: Optional[str] = None) -> dict:
+        """Process asset scan from mobile."""
+        result = await self.db.execute(
+            select(AppleAsset).where(AppleAsset.asset_code == qr_code)
+        )
+        asset = result.scalar_one_or_none()
+        
+        if not asset:
+            return {
+                "status": "not_found",
+                "asset_id": None,
+                "asset_name": None,
+                "message": f"Asset with code {qr_code} not found",
+            }
+        
+        asset.status = scan_status
+        asset.updated_at = datetime.now(timezone.utc)
+        
+        movement = AppleAssetMovement(
+            id=str(uuid.uuid4()),
+            asset_id=asset.id,
+            movement_type="scan",
+            to_location=asset.location,
+            reason=remarks or f"Status changed to {scan_status}",
+            movement_date=date.today(),
+        )
+        self.db.add(movement)
+        await self.db.flush()
+        
+        return {
+            "status": "success",
+            "asset_id": asset.id,
+            "asset_name": asset.name,
+            "message": f"Asset {asset.name} scanned successfully",
+        }
+    
+    async def batch_scan(self, scans: list) -> dict:
+        """Process batch asset scans."""
+        results = []
+        success_count = 0
+        failed_count = 0
+        
+        for scan in scans:
+            result = await self.scan_asset(
+                scan.get("qr_code", ""),
+                scan.get("scan_status", "found"),
+                scan.get("remarks"),
+            )
+            results.append(result)
+            if result["status"] == "success":
+                success_count += 1
+            else:
+                failed_count += 1
+        
+        return {
+            "processed": len(scans),
+            "success": success_count,
+            "failed": failed_count,
+            "results": results,
+        }
+    
+    async def infer_remarks(self, ocr_text: str, context: Optional[dict] = None) -> dict:
+        """AI inference for handwritten remarks."""
+        try:
+            from app.workers.llm_tasks import call_llm_unified
+            
+            prompt = f"""你是学校资产管理助手。请根据以下OCR文本推断最可能的含义。
+
+# OCR文本
+{ocr_text}
+
+# 上下文
+{context or {}}
+
+# 选项类别
+1. 正常 / 良好
+2. 已损坏（需维修或更换）
+3. 已丢失（需说明原因）
+4. 正常磨损
+5. 其他（需说明原因）
+6. 报废
+
+# 输出格式（JSON）
+{{"inferred_meaning": "最可能的含义", "category": "1-6中的类别", "confidence": 0.0-1.0, "alternatives": ["其他可能的选项"], "needs_confirmation": true/false}}
+"""
+            
+            result = call_llm_unified.delay(
+                task_type="remarks_infer",
+                prompt=prompt,
+                model="gpt-4o-mini",
+            )
+            llm_result = result.get(timeout=60) if hasattr(result, 'get') else None
+        except Exception:
+            llm_result = None
+        
+        if llm_result and llm_result.get("status") == "completed":
+            import json
+            try:
+                import re
+                json_match = re.search(r'\{.*\}', llm_result.get("result", "{}"), re.DOTALL)
+                if json_match:
+                    parsed = json.loads(json_match.group())
+                    return {
+                        "inferred_meaning": parsed.get("inferred_meaning", "未知"),
+                        "category": parsed.get("category", "1"),
+                        "confidence": parsed.get("confidence", 0.5),
+                        "alternatives": parsed.get("alternatives", []),
+                        "needs_confirmation": parsed.get("needs_confirmation", True),
+                    }
+            except Exception:
+                pass
+        
+        return {
+            "inferred_meaning": ocr_text[:50] if len(ocr_text) > 50 else ocr_text,
+            "category": "1",
+            "confidence": 0.5,
+            "alternatives": ["需人工确认"],
+            "needs_confirmation": True,
+        }
+    
+    async def locate_asset(self, asset_id: str) -> dict:
+        """AI-powered asset location recommendation."""
+        asset = await self.get_asset(asset_id)
+        if not asset:
+            return {"recommendations": [], "total_count": 0}
+        
+        try:
+            from app.workers.llm_tasks import call_llm_unified
+            
+            prompt = f"""你是学校资产管理助手。请根据以下信息推荐最可能的资产位置。
+
+# 资产信息
+- 名称: {asset.name}
+- 资产码: {asset.asset_code}
+- 类别: {asset.category}
+- 当前状态: {asset.status}
+- 当前/历史位置: {asset.location or "未知"}
+
+# 你的任务
+基于以上信息，推测该资产最可能在的位置，并给出推荐理由。
+
+# 输出格式（JSON数组）
+{{"recommendations": [{{"location": "位置名称", "reason": "推荐理由", "priority": 1-3}}], "total_count": 数量}}
+"""
+            
+            result = call_llm_unified.delay(
+                task_type="asset_locator",
+                prompt=prompt,
+                model="gpt-4o-mini",
+            )
+            llm_result = result.get(timeout=60) if hasattr(result, 'get') else None
+        except Exception:
+            llm_result = None
+        
+        if llm_result and llm_result.get("status") == "completed":
+            import json
+            try:
+                import re
+                json_match = re.search(r'\[.*\]', llm_result.get("result", "[]"), re.DOTALL)
+                if json_match:
+                    recommendations = json.loads(json_match.group())
+                    return {
+                        "recommendations": recommendations[:5],
+                        "total_count": len(recommendations),
+                    }
+            except Exception:
+                pass
+        
+        return {
+            "recommendations": [
+                {"location": asset.location or "当前位置", "reason": "基于当前位置", "priority": 1},
+                {"location": "仓库", "reason": "常见存储位置", "priority": 2},
+            ],
+            "total_count": 2,
+        }
+    
+    async def generate_annual_report(self, academic_year: str, include_depreciation: bool = True) -> dict:
+        """Generate annual asset report."""
+        result = await self.db.execute(
+            select(AppleAsset)
+        )
+        assets = list(result.scalars().all())
+        
+        total_value = sum(float(a.purchase_price or 0) for a in assets)
+        by_category = {}
+        for a in assets:
+            cat = a.category or "其他"
+            if cat not in by_category:
+                by_category[cat] = {"count": 0, "value": 0}
+            by_category[cat]["count"] += 1
+            by_category[cat]["value"] += float(a.purchase_price or 0)
+        
+        depreciation_summary = {}
+        if include_depreciation:
+            from decimal import Decimal
+            for a in assets:
+                if a.purchase_date and a.purchase_price:
+                    years = (date.today() - a.purchase_date).days / 365.25
+                    if years >= 5:
+                        current_val = 0
+                    else:
+                        current_val = float(a.purchase_price) * (1 - years / 5)
+                    depreciation_summary[a.asset_code] = {
+                        "original": float(a.purchase_price),
+                        "current": round(current_val, 2),
+                        "depreciation": round(float(a.purchase_price) - current_val, 2),
+                    }
+        
+        return {
+            "academic_year": academic_year,
+            "total_assets": len(assets),
+            "total_value": total_value,
+            "by_category": by_category,
+            "depreciation_summary": depreciation_summary,
+            "download_url": f"/api/v1/apple/assets/reports/{academic_year}/download",
+        }

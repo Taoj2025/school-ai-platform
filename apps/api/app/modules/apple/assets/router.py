@@ -10,6 +10,11 @@ from .schemas import (
     WriteoffRequest, WriteoffResponse,
     PrintLabelRequest, PrintLabelResponse,
     AssetStatsResponse,
+    AssetScanRequest, AssetScanResponse,
+    BatchScanRequest, BatchScanResponse,
+    RemarksInferRequest, RemarksInferResponse,
+    AssetLocatorRequest, AssetLocatorResponse,
+    AnnualReportRequest, AnnualReportResponse,
 )
 from .service import AssetService
 from ....db.session import get_db
@@ -146,4 +151,60 @@ async def print_labels(
 ):
     service = AssetService(db)
     result = await service.print_labels(request)
+    return success_response(data=result)
+
+
+@router.post("/scan", response_model=dict)
+async def scan_asset(
+    request: AssetScanRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Process asset scan from mobile."""
+    service = AssetService(db)
+    result = await service.scan_asset(request.qr_code, request.scan_status, request.remarks)
+    return success_response(data=result)
+
+
+@router.post("/scan/batch", response_model=dict)
+async def batch_scan_assets(
+    request: BatchScanRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Process batch asset scans."""
+    service = AssetService(db)
+    result = await service.batch_scan(request.scans)
+    return success_response(data=result)
+
+
+@router.post("/remarks/infer", response_model=dict)
+async def infer_remarks(
+    request: RemarksInferRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """AI inference for handwritten remarks."""
+    service = AssetService(db)
+    result = await service.infer_remarks(request.ocr_text, request.context)
+    return success_response(data=result)
+
+
+@router.post("/locate", response_model=dict)
+async def locate_asset(
+    request: AssetLocatorRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """AI-powered asset location recommendation."""
+    service = AssetService(db)
+    result = await service.locate_asset(request.asset_id)
+    return success_response(data=result)
+
+
+@router.get("/reports/annual", response_model=dict)
+async def generate_annual_report(
+    academic_year: str = Query(..., description="e.g., 2025-2026"),
+    include_depreciation: bool = Query(True),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate annual asset report."""
+    service = AssetService(db)
+    result = await service.generate_annual_report(academic_year, include_depreciation)
     return success_response(data=result)

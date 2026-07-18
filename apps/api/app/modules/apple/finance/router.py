@@ -2,12 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
+from datetime import date as date_type
 from .models import AppleFinanceRecord, AppleQuotation
 from .schemas import (
     FinanceRecordCreate, FinanceRecordUpdate, FinanceRecordResponse,
     QuotationCreate, QuotationUpdate, QuotationResponse,
     QuotationAnalyzeResponse, AddressLabelRequest, AddressLabelResponse,
     FinanceStatsResponse,
+    OCRReceiptRequest, OCRReceiptResponse,
+    DailySummaryRequest, DailySummaryResponse,
+    QuotationComparisonRequest, QuotationComparisonResponse,
+    AuditTransactionRequest, AuditExceptionRequest, FinanceAuditResponse,
 )
 from .service import FinanceService
 from ....db.session import get_db
@@ -195,4 +200,61 @@ async def generate_address_labels(
 ):
     service = FinanceService(db)
     result = await service.generate_address_labels(request)
+    return success_response(data=result)
+
+
+@router.post("/ocr/receipt", response_model=dict)
+async def ocr_receipt(
+    request: OCRReceiptRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """OCR receipt recognition using unified interface."""
+    service = FinanceService(db)
+    result = await service.recognize_receipt(request.file_id)
+    return success_response(data=result)
+
+
+@router.get("/income/daily-summary", response_model=dict)
+async def get_daily_summary(
+    target_date: Optional[date_type] = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get daily collection summary."""
+    service = FinanceService(db)
+    result = await service.get_daily_summary(target_date or date_type.today())
+    return success_response(data=result)
+
+
+@router.post("/quotations/compare", response_model=dict)
+async def compare_quotations(
+    request: QuotationComparisonRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Compare multiple quotations for anomaly detection."""
+    service = FinanceService(db)
+    result = await service.compare_quotations(request.quotation_ids)
+    return success_response(data=result)
+
+
+@router.get("/audit/transactions", response_model=dict)
+async def get_audit_transactions(
+    start_date: Optional[date_type] = Query(None),
+    end_date: Optional[date_type] = Query(None),
+    category: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get audit trail of transactions."""
+    service = FinanceService(db)
+    result = await service.get_audit_transactions(start_date, end_date, category)
+    return success_response(data=result)
+
+
+@router.get("/audit/exceptions", response_model=dict)
+async def get_audit_exceptions(
+    exception_type: str = Query(..., description="single_quote or not_lowest"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get audit exceptions for review."""
+    service = FinanceService(db)
+    result = await service.get_audit_exceptions(exception_type)
     return success_response(data=result)

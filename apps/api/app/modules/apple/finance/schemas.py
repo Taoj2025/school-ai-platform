@@ -111,3 +111,58 @@ class FinanceStatsResponse(BaseModel):
     pending_count: int
     this_month_income: float
     this_month_expense: float
+
+
+class OCRReceiptRequest(BaseModel):
+    file_id: str
+    source: str = "file"
+
+
+class OCRReceiptResponse(BaseModel):
+    status: str
+    fields: dict
+    confidence: float
+    needs_review: bool
+    engine_used: Optional[str] = None
+
+
+class DailySummaryRequest(BaseModel):
+    date: date
+
+
+class DailySummaryResponse(BaseModel):
+    date: date
+    total_amount: float
+    record_count: int
+    by_category: dict[str, float]
+    needs_deposit: list[dict]
+
+
+class QuotationComparisonRequest(BaseModel):
+    quotation_ids: list[str]
+
+
+class QuotationComparisonResponse(BaseModel):
+    single_bid: list[dict]
+    non_lowest_chosen: list[dict]
+    lowest_bid_summary: list[dict]
+    total_quotations: int
+    warnings: list[str]
+    confidence: str
+
+
+class AuditTransactionRequest(BaseModel):
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    category: Optional[str] = None
+
+
+class AuditExceptionRequest(BaseModel):
+    exception_type: str  # "single_quote" or "not_lowest"
+
+
+class FinanceAuditResponse(BaseModel):
+    transactions: list[dict]
+    total_count: int
+    total_amount: float
+    exceptions: list[dict]

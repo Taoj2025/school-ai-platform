@@ -127,3 +127,66 @@ class AssetStatsResponse(BaseModel):
     written_off: int
     total_value: float
     categories: dict
+
+
+class AssetScanRequest(BaseModel):
+    qr_code: str
+    scan_status: str  # "found", "missing", "damaged", "transferred"
+    location_id: Optional[str] = None
+    remarks: Optional[str] = None
+    photo_id: Optional[str] = None
+
+
+class AssetScanResponse(BaseModel):
+    status: str
+    asset_id: Optional[str] = None
+    asset_name: Optional[str] = None
+    message: str
+
+
+class BatchScanRequest(BaseModel):
+    scans: list[AssetScanRequest]
+
+
+class BatchScanResponse(BaseModel):
+    processed: int
+    success: int
+    failed: int
+    results: list[AssetScanResponse]
+
+
+class RemarksInferRequest(BaseModel):
+    ocr_text: str
+    context: Optional[dict] = None
+
+
+class RemarksInferResponse(BaseModel):
+    inferred_meaning: str
+    category: str
+    confidence: float
+    alternatives: list[str]
+    needs_confirmation: bool
+
+
+class AssetLocatorRequest(BaseModel):
+    asset_id: str
+
+
+class AssetLocatorResponse(BaseModel):
+    recommendations: list[dict]
+    total_count: int
+
+
+class AnnualReportRequest(BaseModel):
+    academic_year: str
+    include_depreciation: bool = True
+    include_movements: bool = True
+
+
+class AnnualReportResponse(BaseModel):
+    academic_year: str
+    total_assets: int
+    total_value: float
+    by_category: dict
+    depreciation_summary: dict
+    download_url: str
