@@ -276,13 +276,20 @@ class ApiClient {
   async importStudents(file: File) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await fetch(`${this.baseUrl}/api/v1/apple/students/import`, {
       method: 'POST',
       body: formData,
     });
-    
+
     return response.json();
+  }
+
+  async bulkCreateStudents(students: any[]) {
+    return this.fetch<any>('/api/v1/apple/students/import', {
+      method: 'POST',
+      body: JSON.stringify({ students }),
+    });
   }
 
   async getStudentCertificates(studentId: string) {

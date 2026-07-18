@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Upload, FileText, Download, Check, X, AlertCircle } from 'lucide-react';
-import { addStudent, getStudents } from '@/lib/studentStore';
+import { api } from '@/lib/api';
 
 interface ImportedStudent {
   row: number;
@@ -17,19 +17,30 @@ interface ImportedStudent {
   error?: string;
 }
 
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '');
+  for (const line of lines) {
+    const cells = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
+    rows.push(cells);
+  }
+  return rows;
+}
+
 export default function ImportStudentsPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imported, setImported] = useState<ImportedStudent[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      simulateImport();
+      parseFile(selectedFile);
     }
   };
 
@@ -39,55 +50,80 @@ export default function ImportStudentsPage() {
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile && (droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.csv'))) {
       setFile(droppedFile);
-      simulateImport();
+      parseFile(droppedFile);
     }
   };
 
-  const simulateImport = () => {
+  const parseFile = (f: File) => {
+    setError(null);
     setUploading(true);
-    setTimeout(() => {
-      setImported([
-        { row: 1, name: '陳小明', student_no: '2025001', class: '1A', gender: 'M', status: 'success' },
-        { row: 2, name: '李美美', student_no: '2025002', class: '1A', gender: 'F', status: 'success' },
-        { row: 3, name: '張大文', student_no: '2025003', class: '1B', gender: 'M', status: 'error', error: '學號已存在' },
-        { row: 4, name: '王小红', student_no: '2025004', class: '1B', gender: 'F', status: 'success' },
-        { row: 5, name: '劉志偉', student_no: '2024001', class: '2A', gender: 'M', status: 'success' },
-      ]);
-      setUploading(false);
-    }, 1500);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = String(reader.result || '');
+        const rows = parseCsv(text);
+        if (rows.length < 2) {
+          setError('文件沒有資料行');
+          setUploading(false);
+          return;
+        }
+        const header = rows[0].map((h) => h.toLowerCase());
+        const col = (name: string) => header.indexOf(name);
+        const nameIdx = col('姓名') >= 0 ? col('姓名') : 0;
+        const noIdx = col('學號') >= 0 ? col('學號') : 1;
+        const classIdx = col('班別') >= 0 ? col('班別') : 2;
+        const genderIdx = col('性別') >= 0 ? col('性別') : 3;
+
+        const parsed: ImportedStudent[] = rows.slice(1).map((cells, i) => {
+          const name = cells[nameIdx] || '';
+          const student_no = cells[noIdx] || '';
+          const cls = cells[classIdx] || '';
+          const genderRaw = (cells[genderIdx] || '').toUpperCase();
+          const gender = genderRaw === 'F' || genderRaw === '女' ? 'F' : 'M';
+          if (!name || !student_no) {
+            return { row: i + 2, name, student_no, class: cls, gender, status: 'error', error: '缺少姓名或學號' };
+          }
+          return { row: i + 2, name, student_no, class: cls, gender, status: 'success' };
+        });
+        setImported(parsed);
+      } catch {
+        setError('解析文件失敗');
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsText(f, 'utf-8');
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     const successStudents = imported.filter((s) => s.status === 'success');
-    const existingStudents = getStudents();
-    const existingStudentNos = new Set(existingStudents.map((s) => s.student_no));
-
-    let importedCount = 0;
-    let skippedCount = 0;
-
-    successStudents.forEach((student) => {
-      if (existingStudentNos.has(student.student_no)) {
-        skippedCount++;
-      } else {
-        addStudent({
-          name: student.name,
-          student_no: student.student_no,
-          class: student.class,
-          gender: student.gender,
-          enrollment_date: new Date().toISOString().split('T')[0],
-          status: 'active',
-        });
-        importedCount++;
-      }
-    });
-
-    alert(`成功導入 ${importedCount} 名學生${skippedCount > 0 ? `（${skippedCount} 名學號重複已跳過）` : ''}`);
-    setImported([]);
-    setFile(null);
-
-    // Redirect to student list
-    router.push('/dashboard/apple/students');
-    router.refresh();
+    if (successStudents.length === 0) {
+      setError('沒有可導入的學生');
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const payload = successStudents.map((s) => ({
+        student_no: s.student_no,
+        name_zh: s.name,
+        name_en: s.name,
+        gender: s.gender,
+        class_name: s.class,
+        admission_date: new Date().toISOString().split('T')[0],
+      }));
+      const res = await api.bulkCreateStudents(payload);
+      const importedCount = res?.data?.imported ?? successStudents.length;
+      const failed = res?.data?.failed ?? 0;
+      alert(`成功導入 ${importedCount} 名學生${failed > 0 ? `（${failed} 名失敗）` : ''}`);
+      setImported([]);
+      setFile(null);
+      router.push('/dashboard/apple/students');
+      router.refresh();
+    } catch (e: any) {
+      setError(e.message || '導入失敗');
+      setUploading(false);
+    }
   };
 
   const downloadTemplate = () => {
@@ -237,6 +273,13 @@ export default function ImportStudentsPage() {
                 </table>
               </div>
             </div>
+
+            {error && (
+              <div className="flex items-center gap-2 rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+                <AlertCircle className="w-5 h-5" />
+                {error}
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex items-center justify-between">

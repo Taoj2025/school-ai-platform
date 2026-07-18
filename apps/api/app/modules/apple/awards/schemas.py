@@ -47,7 +47,7 @@ class AwardResponse(BaseModel):
 
 
 class AwardRecipientCreate(BaseModel):
-    award_id: str
+    award_id: Optional[str] = None
     student_id: str
     student_name: Optional[str] = None
     class_name: Optional[str] = None

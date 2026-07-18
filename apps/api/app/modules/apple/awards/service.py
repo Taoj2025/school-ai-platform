@@ -134,6 +134,8 @@ class AwardService:
         )
         self.db.add(db_recipient)
         await self.db.flush()
+        await self.db.commit()
+        await self.db.refresh(db_recipient)
         return db_recipient
     
     async def list_recipients(self, award_id: str):

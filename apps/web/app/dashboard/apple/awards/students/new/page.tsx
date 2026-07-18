@@ -5,19 +5,10 @@ import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save, DollarSign, Award } from 'lucide-react';
-import { getStudents, type Student } from '@/lib/studentStore';
-import { addAssignment } from '@/lib/awardAssignmentStore';
+import { api } from '@/lib/api';
+import { normalizeStudent, type Student } from '@/lib/studentStore';
 
-const availableAwards = [
-  { id: '1', name: '學業優異獎', type: 'academic' },
-  { id: '2', name: '品行優良獎', type: 'conduct' },
-  { id: '3', name: '服務精神獎', type: 'service' },
-  { id: '4', name: '體育傑出獎', type: 'sports' },
-  { id: '5', name: '藝術成就獎', type: 'art' },
-  { id: '6', name: '學業進步獎', type: 'academic' },
-  { id: '7', name: '最佳出席獎', type: 'conduct' },
-  { id: '8', name: '傑出領袖獎', type: 'service' },
-];
+type AwardOption = { id: string; name: string; type: string };
 
 const suggestedAmounts: Record<string, number[]> = {
   academic: [1000, 1500, 2000, 3000],
@@ -25,6 +16,7 @@ const suggestedAmounts: Record<string, number[]> = {
   service: [400, 600, 1000],
   sports: [500, 1000, 1500],
   art: [500, 1000, 1500],
+  other: [500, 1000],
 };
 
 const inputStyle: React.CSSProperties = {
@@ -50,8 +42,10 @@ const labelStyle: React.CSSProperties = {
 export default function NewStudentAwardPage() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
+  const [awards, setAwards] = useState<AwardOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     student_id: '',
@@ -72,9 +66,27 @@ export default function NewStudentAwardPage() {
   });
 
   useEffect(() => {
-    const data = getStudents();
-    setStudents(data);
-    setLoading(false);
+    (async () => {
+      setLoading(true);
+      try {
+        const [studentsRes, awardsRes] = await Promise.all([
+          api.getStudents({ page: 1, page_size: 200 }),
+          api.getAwards({ page: 1, page_size: 200 }),
+        ]);
+        setStudents((studentsRes.data?.items ?? []).map(normalizeStudent));
+        setAwards(
+          (awardsRes.data?.items ?? []).map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            type: a.type || 'other',
+          }))
+        );
+      } catch (e: any) {
+        setError(e.message || '載入失敗');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   // When student is selected, auto-fill info
@@ -93,7 +105,7 @@ export default function NewStudentAwardPage() {
 
   // When award is selected, auto-fill info and suggest amount
   const handleAwardChange = (awardId: string) => {
-    const award = availableAwards.find((a) => a.id === awardId);
+    const award = awards.find((a) => a.id === awardId);
     if (award) {
       setFormData((prev) => ({
         ...prev,
@@ -101,7 +113,7 @@ export default function NewStudentAwardPage() {
         award_name: award.name,
         award_type: award.type,
         // Auto-suggest first amount if not yet specified
-        bounty_amount: prev.bounty_amount === '' ? suggestedAmounts[award.type][0] : prev.bounty_amount,
+        bounty_amount: prev.bounty_amount === '' ? (suggestedAmounts[award.type]?.[0] ?? 1000) : prev.bounty_amount,
       }));
     }
   };
@@ -132,31 +144,19 @@ export default function NewStudentAwardPage() {
     }
 
     setSaving(true);
+    setError(null);
     try {
-      const newAssignment = addAssignment({
+      await api.createAwardRecipient(formData.award_id, {
         student_id: formData.student_id,
-        student_no: formData.student_no,
         student_name: formData.student_name,
-        student_class: formData.student_class,
-        award_id: formData.award_id,
-        award_name: formData.award_name,
-        award_type: formData.award_type,
-        academic_year: formData.academic_year,
-        semester: formData.semester,
-        bounty_amount: Number(formData.bounty_amount),
-        currency: formData.currency,
-        payment_status: formData.payment_status,
-        issue_date: formData.issue_date,
-        payment_date: formData.payment_date || undefined,
-        remark: formData.remark || undefined,
+        class_name: formData.student_class,
+        amount: Number(formData.bounty_amount),
+        status: formData.payment_status === 'paid' ? 'issued' : 'pending',
       });
-
-      alert(`獎金記錄已新增！\n學生：${newAssignment.student_name}\n獎項：${newAssignment.award_name}\n金額：HK$ ${newAssignment.bounty_amount.toLocaleString('zh-HK')}`);
+      alert(`獎金記錄已新增！\n學生：${formData.student_name}\n獎項：${formData.award_name}\n金額：HK$ ${Number(formData.bounty_amount).toLocaleString('zh-HK')}`);
       router.push('/dashboard/apple/awards/students');
-    } catch (error) {
-      console.error('Failed to create assignment:', error);
-      alert('新增失敗，請稍後再試');
-    } finally {
+    } catch (err: any) {
+      setError(err.message || '新增失敗，請稍後再試');
       setSaving(false);
     }
   };
@@ -172,8 +172,8 @@ export default function NewStudentAwardPage() {
     );
   }
 
-  const selectedAward = availableAwards.find((a) => a.id === formData.award_id);
-  const suggestedList = selectedAward ? suggestedAmounts[selectedAward.type] : [];
+  const selectedAward = awards.find((a) => a.id === formData.award_id);
+  const suggestedList = selectedAward ? (suggestedAmounts[selectedAward.type] ?? []) : [];
 
   return (
     <>
@@ -198,6 +198,11 @@ export default function NewStudentAwardPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              {error}
+            </div>
+          )}
           {/* Student Selection */}
           <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-2 mb-4">
@@ -261,7 +266,7 @@ export default function NewStudentAwardPage() {
                   required
                 >
                   <option value="">請選擇獎項</option>
-                  {availableAwards.map((award) => (
+                  {awards.map((award) => (
                     <option key={award.id} value={award.id}>
                       {award.name}
                     </option>
