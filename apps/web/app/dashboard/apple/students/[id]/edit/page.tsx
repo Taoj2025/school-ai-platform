@@ -6,6 +6,7 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 import { normalizeStudent, toStudentPayload, type Student } from '@/lib/studentStore';
 
 const classOptions = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
@@ -20,6 +21,7 @@ export default function EditStudentPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  useAIGlobal('students', '編輯學生');
 
   const [formData, setFormData] = useState({
     id: '',

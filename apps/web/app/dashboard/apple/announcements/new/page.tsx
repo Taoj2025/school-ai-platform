@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Megaphone, Sparkles, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 
 interface GeneratedResult {
   title_zh: string;
@@ -35,6 +36,7 @@ const AUDIENCE_OPTIONS = [
 
 export default function NewAnnouncementPage() {
   const router = useRouter();
+  useAIGlobal('announcements', '新建公告');
   const [form, setForm] = useState({
     title_type: 'exam',
     target_audience: 'whole_school',
@@ -136,39 +138,39 @@ export default function NewAnnouncementPage() {
             <h3 className="text-base font-semibold" style={{ color: 'var(--text)' }}>公告資訊</h3>
 
             <Field label="公告類型">
-              <select value={form.title_type} onChange={(e) => update('title_type', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+              <select name="title_type" value={form.title_type} onChange={(e) => update('title_type', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
                 {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
 
             <Field label="目標對象">
-              <select value={form.target_audience} onChange={(e) => update('target_audience', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+              <select name="target_audience" value={form.target_audience} onChange={(e) => update('target_audience', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
                 {AUDIENCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
 
             <Field label="關鍵日期 (用逗號分隔)">
-              <input value={form.key_dates} onChange={(e) => update('key_dates', e.target.value)} placeholder="2026-10-15, 2026-10-20" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="key_dates" value={form.key_dates} onChange={(e) => update('key_dates', e.target.value)} placeholder="2026-10-15, 2026-10-20" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
             </Field>
 
             <Field label="地點">
-              <input value={form.key_location} onChange={(e) => update('key_location', e.target.value)} placeholder="禮堂" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="key_location" value={form.key_location} onChange={(e) => update('key_location', e.target.value)} placeholder="禮堂" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
             </Field>
 
             <Field label="科目 (考試類型)">
-              <input value={form.subject} onChange={(e) => update('subject', e.target.value)} placeholder="數學" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="subject" value={form.subject} onChange={(e) => update('subject', e.target.value)} placeholder="數學" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
             </Field>
 
             <Field label="負責老師 (用逗號分隔)">
-              <input value={form.teachers} onChange={(e) => update('teachers', e.target.value)} placeholder="陳老師, 李老師" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="teachers" value={form.teachers} onChange={(e) => update('teachers', e.target.value)} placeholder="陳老師, 李老師" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
             </Field>
 
             <Field label="特別要求">
-              <textarea value={form.special_notes} onChange={(e) => update('special_notes', e.target.value)} placeholder="請穿著整齊校服" rows={2} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <textarea name="special_notes" value={form.special_notes} onChange={(e) => update('special_notes', e.target.value)} placeholder="請穿著整齊校服" rows={2} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
             </Field>
 
             <Field label="語氣">
-              <select value={form.formality} onChange={(e) => update('formality', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+              <select name="formality" value={form.formality} onChange={(e) => update('formality', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
                 <option value="formal">正式</option>
                 <option value="semi-formal">半正式</option>
                 <option value="casual">輕鬆</option>

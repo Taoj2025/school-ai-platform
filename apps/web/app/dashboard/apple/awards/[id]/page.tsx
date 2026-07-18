@@ -6,6 +6,7 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Edit, FileText, Download, User, Check, List } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 import { awardTypeLabel, awardStatusLabel } from '@/lib/utils';
 import AwardsScriptDialog from '@/components/modules/apple/AwardsScriptDialog';
 
@@ -34,6 +35,7 @@ interface Recipient {
 export default function AwardDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  useAIGlobal('awards', '獎項詳情');
   const [award, setAward] = useState<Award | null>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [loading, setLoading] = useState(true);

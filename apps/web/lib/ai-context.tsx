@@ -63,6 +63,10 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       console.warn('[AI] No active field registered. Click on a text field first, then use AI.');
       return;
     }
+    if (!document.body.contains(el)) {
+      console.warn('[AI] Active field is no longer in the DOM.');
+      return;
+    }
     const start = el.selectionStart ?? el.value.length;
     const end = el.selectionEnd ?? el.value.length;
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
@@ -73,23 +77,27 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     } else {
       el.value = newValue;
     }
-    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new InputEvent('input', { bubbles: true, data: content }));
     el.focus();
     const newCursorPos = start + content.length;
     el.setSelectionRange(newCursorPos, newCursorPos);
   }, []);
 
-  // Auto-register focused input/textarea elements
+  // Auto-register focused input/textarea elements (skipping AI popover internals)
   useEffect(() => {
     let lastFocused: HTMLElement | null = null;
 
+    const isInsideAIPanel = (el: HTMLElement): boolean => {
+      return !!el.closest('[data-ai-panel="true"]');
+    };
+
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
+      if (isInsideAIPanel(target)) return;
       if (
         target instanceof HTMLInputElement ||
         target instanceof HTMLTextAreaElement
       ) {
-        // Only register if it's a text-like input (not checkbox/radio/etc)
         const type = (target as HTMLInputElement).type;
         if (!type || !['checkbox', 'radio', 'file', 'hidden', 'submit', 'button', 'reset', 'image', 'range', 'color'].includes(type)) {
           lastFocused = target;
@@ -100,18 +108,9 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const handleFocusOut = (e: FocusEvent) => {
-      const related = e.relatedTarget as HTMLElement;
-      if (!related || !document.body.contains(related)) {
-        // Only clear if focus left the page or went to non-input
-      }
-    };
-
     document.addEventListener('focusin', handleFocusIn);
-    document.addEventListener('focusout', handleFocusOut);
     return () => {
       document.removeEventListener('focusin', handleFocusIn);
-      document.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 

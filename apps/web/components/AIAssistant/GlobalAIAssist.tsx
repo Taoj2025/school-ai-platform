@@ -131,6 +131,7 @@ export default function GlobalAIAssist() {
       {/* AI Popover */}
       {isOpen && (
         <div
+          data-ai-panel="true"
           className="fixed bottom-24 right-6 z-50 w-96 rounded-xl shadow-2xl overflow-hidden"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--border)', maxHeight: '70vh' }}
         >

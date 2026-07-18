@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Send, CheckCircle, Eye, Loader2, Trash2, Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 import { announcementTypeLabels, announcementStatusLabels } from '@/lib/utils';
 
 interface Announcement {
@@ -30,6 +31,7 @@ export default function AnnouncementDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  useAIGlobal('announcements', '公告詳情');
 
   const [ann, setAnn] = useState<Announcement | null>(null);
   const [loading, setLoading] = useState(true);
@@ -188,7 +190,7 @@ function EditField({ label, value, onChange }: { label: string; value: string; o
   return (
     <div>
       <label className="block text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</label>
-      <input value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+      <input name={label} value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
     </div>
   );
 }
@@ -197,7 +199,7 @@ function EditArea({ label, value, onChange }: { label: string; value: string; on
   return (
     <div>
       <label className="block text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</label>
-      <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={5} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+      <textarea name={label} value={value} onChange={(e) => onChange(e.target.value)} rows={5} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
     </div>
   );
 }

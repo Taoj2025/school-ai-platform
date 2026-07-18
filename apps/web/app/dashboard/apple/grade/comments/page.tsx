@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -18,6 +18,14 @@ interface Comment {
 }
 
 export default function CommentsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center text-sm" style={{ color: 'var(--muted)' }}>載入中...</div>}>
+      <CommentsContent />
+    </Suspense>
+  );
+}
+
+function CommentsContent() {
   const searchParams = useSearchParams();
   const examId = searchParams.get('exam_id');
 

@@ -6,6 +6,7 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 import { awardTypeLabel, awardStatusLabel } from '@/lib/utils';
 
 const awardTypeOptions = [
@@ -35,6 +36,7 @@ export default function EditAwardPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  useAIGlobal('awards', '編輯獎項');
 
   const [formData, setFormData] = useState({
     name: '',

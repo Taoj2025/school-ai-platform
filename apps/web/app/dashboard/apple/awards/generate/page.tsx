@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, FileText, Download, Eye, Check, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 import { normalizeStudent } from '@/lib/studentStore';
 
 // Common input style using CSS variables
@@ -32,6 +33,7 @@ const awardOptions = [
 ];
 
 export default function GenerateCertificatesPage() {
+  useAIGlobal('awards', '批量生成獎狀');
   const [students, setStudents] = useState<CertStudent[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -444,6 +446,7 @@ export default function GenerateCertificatesPage() {
                 獎項名稱
               </label>
               <select
+                name="awardName"
                 value={awardName}
                 onChange={(e) => setAwardName(e.target.value)}
                 style={inputStyle}
@@ -461,6 +464,7 @@ export default function GenerateCertificatesPage() {
               </label>
               <input
                 type="date"
+                name="ceremonyDate"
                 value={ceremonyDate}
                 onChange={(e) => setCeremonyDate(e.target.value)}
                 style={inputStyle}
@@ -472,6 +476,7 @@ export default function GenerateCertificatesPage() {
               </label>
               <input
                 type="text"
+                name="signatory"
                 value={signatory}
                 onChange={(e) => setSignatory(e.target.value)}
                 placeholder="陳校長"

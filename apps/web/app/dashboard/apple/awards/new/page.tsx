@@ -6,6 +6,7 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 
 const awardTypes = [
   { value: 'academic', label: '學業獎' },
@@ -18,6 +19,7 @@ const awardTypes = [
 
 export default function NewAwardPage() {
   const router = useRouter();
+  useAIGlobal('awards', '新增獎項');
   const [formData, setFormData] = useState({
     name: '',
     award_type: 'academic',
@@ -88,6 +90,7 @@ export default function NewAwardPage() {
               </label>
               <input
                 type="text"
+                name="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 style={inputStyle}
@@ -102,6 +105,7 @@ export default function NewAwardPage() {
                   獎項類型 <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <select
+                  name="award_type"
                   value={formData.award_type}
                   onChange={(e) => setFormData({ ...formData, award_type: e.target.value })}
                   style={inputStyle}
@@ -119,6 +123,7 @@ export default function NewAwardPage() {
                   學年 <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <select
+                  name="academic_year"
                   value={formData.academic_year}
                   onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
                   style={inputStyle}
@@ -136,6 +141,7 @@ export default function NewAwardPage() {
                   學期 <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <select
+                  name="semester"
                   value={formData.semester}
                   onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
                   style={inputStyle}
@@ -151,6 +157,7 @@ export default function NewAwardPage() {
                 </label>
                 <input
                   type="number"
+                  name="amount"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   style={inputStyle}
@@ -164,6 +171,7 @@ export default function NewAwardPage() {
                 備註
               </label>
               <textarea
+                name="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}

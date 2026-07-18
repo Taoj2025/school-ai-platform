@@ -6,12 +6,14 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAIGlobal } from '@/lib/ai-context';
 import { toStudentPayload } from '@/lib/studentStore';
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
 export default function NewStudentPage() {
   const router = useRouter();
+  useAIGlobal('students', '新增學生');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -89,6 +91,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="text"
+                    name="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     style={inputStyle}
@@ -101,6 +104,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="text"
+                    name="student_no"
                     value={formData.student_no}
                     onChange={(e) => setFormData({ ...formData, student_no: e.target.value })}
                     style={inputStyle}
@@ -112,6 +116,7 @@ export default function NewStudentPage() {
                     班別 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
+                    name="class"
                     value={formData.class}
                     onChange={(e) => setFormData({ ...formData, class: e.target.value })}
                     style={inputStyle}
@@ -126,6 +131,7 @@ export default function NewStudentPage() {
                     性別 <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
+                    name="gender"
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     style={inputStyle}
@@ -140,6 +146,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="date"
+                    name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                     style={inputStyle}
@@ -151,6 +158,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="text"
+                    name="id_number"
                     value={formData.id_number}
                     onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
                     style={inputStyle}
@@ -162,6 +170,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="date"
+                    name="enrollment_date"
                     value={formData.enrollment_date}
                     onChange={(e) => setFormData({ ...formData, enrollment_date: e.target.value })}
                     style={inputStyle}
@@ -180,6 +189,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="text"
+                    name="parent_name"
                     value={formData.parent_name}
                     onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
                     style={inputStyle}
@@ -191,6 +201,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="tel"
+                    name="parent_phone"
                     value={formData.parent_phone}
                     onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
                     style={inputStyle}
@@ -202,6 +213,7 @@ export default function NewStudentPage() {
                   </label>
                   <input
                     type="text"
+                    name="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     style={inputStyle}

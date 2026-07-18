@@ -19,19 +19,17 @@ export default function AIFieldButton({ placeholder, label, onGenerated, classNa
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const { registerField, unregisterField, insertIntoField } = useAIContext();
+  const { insertIntoField, activeFieldLabel } = useAIContext();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleOpen = () => {
     setOpen(true);
     setResult(null);
     setInput('');
-    registerField(inputRef.current, label || '一般輸入');
   };
 
   const handleClose = () => {
     setOpen(false);
-    unregisterField();
   };
 
   const handleGenerate = async () => {
@@ -76,6 +74,7 @@ export default function AIFieldButton({ placeholder, label, onGenerated, classNa
 
       {open && (
         <div
+          data-ai-panel="true"
           className="absolute top-full left-0 mt-1 z-50 w-80 rounded-lg shadow-xl overflow-hidden"
           style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--border)' }}
         >
@@ -136,9 +135,10 @@ export default function AIFieldButton({ placeholder, label, onGenerated, classNa
                   onClick={handleInsert}
                   className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
                   style={{ backgroundColor: 'var(--brand)', color: 'white' }}
+                  title={activeFieldLabel ? `插入到：${activeFieldLabel}` : '請先點擊一個輸入框再使用此功能'}
                 >
                   <Check className="w-3.5 h-3.5" />
-                  插入到當前字段
+                  {activeFieldLabel ? `插入到「${activeFieldLabel}」` : '需選擇字段'}
                 </button>
               </div>
             )}
