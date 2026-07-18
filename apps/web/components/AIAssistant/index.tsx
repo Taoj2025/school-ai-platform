@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MessageCircle, X, Send, Sparkles, Bot, User, ChevronDown } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -48,16 +49,29 @@ export default function AIAssistant({ className = '' }: AIAssistantProps) {
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await api.generateAI(input, 'chat');
+      const reply =
+        res.data?.result ||
+        '抱歉，我暫時無法生成回覆，請稍後再試。';
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '感謝你的提問！我正在分析你的需求...\n\n目前我還在學習階段，請告訴我你具體想做什么，我會尽力幫你完成任務。',
+        content: reply,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (e: any) {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `⚠️ 出錯了：${e.message || '請求失敗'}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {

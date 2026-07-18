@@ -45,6 +45,17 @@ class ApiClient {
     return response.json();
   }
 
+  // ============ AI Assistant API ============
+  async generateAI(prompt: string, jobType: string = 'chat') {
+    return this.fetch<{ id: string; status: string; result: string | null; model: string }>(
+      '/api/v1/ai/generate',
+      {
+        method: 'POST',
+        body: JSON.stringify({ job_type: jobType, prompt, model: 'kimi-k2.5' }),
+      }
+    );
+  }
+
   // ============ Awards API ============
   async getAwards(params?: { page?: number; page_size?: number; academic_year?: string; semester?: number }) {
     return this.fetch<{ items: any[]; total: number; page: number; page_size: number }>(

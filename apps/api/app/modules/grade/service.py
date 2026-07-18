@@ -293,7 +293,9 @@ class GradeService:
         level = self._determine_level(score.percentage)
         prompt = self._build_comment_prompt(score, exam_session, statistics, history, level)
 
-        if not LLM_AVAILABLE:
+        from app.core.llm import generate_text, get_llm_client
+
+        if get_llm_client() is None:
             comment = GeneratedComment(
                 exam_session_id=exam_session.id,
                 score_id=score_id,
@@ -313,37 +315,26 @@ class GradeService:
             }
 
         try:
-            result = call_llm_unified.delay(
-                task_type="grade_comment",
-                prompt=prompt,
-                model="gpt-4o-mini",
-                temperature=0.7,
-                max_tokens=500,
+            llm_result = await generate_text(prompt, model="kimi-k2.5", max_tokens=800)
+            comment_content = llm_result or ""
+
+            comment = GeneratedComment(
+                exam_session_id=exam_session.id,
+                score_id=score_id,
+                content=comment_content,
+                level=level,
+                model="kimi-k2.5",
+                confidence=None,
+                status="pending_review",
             )
-            llm_result = result.get(timeout=120)
+            await self.repo.create_generated_comment(comment)
 
-            if llm_result.get("status") == "completed":
-                comment_content = llm_result.get("result", "")
-
-                comment = GeneratedComment(
-                    exam_session_id=exam_session.id,
-                    score_id=score_id,
-                    content=comment_content,
-                    level=level,
-                    model="gpt-4o-mini",
-                    confidence=llm_result.get("usage", {}).get("total_tokens", 0) / 1000 if llm_result.get("usage") else None,
-                    status="pending_review",
-                )
-                await self.repo.create_generated_comment(comment)
-
-                return {
+            return {
                     "status": "completed",
                     "comment_id": comment.id,
                     "content": comment_content,
                     "level": level,
-                }
-            else:
-                return {"status": "failed", "error": llm_result.get("error", "LLM call failed")}
+            }
 
         except Exception as e:
             logger.error(f"Comment generation failed: {str(e)}")

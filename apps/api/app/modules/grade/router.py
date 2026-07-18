@@ -208,7 +208,7 @@ async def generate_comment(
 @router.post("/exam-sessions/{session_id}/generate-comments", response_model=dict)
 async def batch_generate_comments(
     session_id: str,
-    student_ids: Optional[List[str]] = Query(None),
+    student_ids: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     """Batch generate AI comments for all students in an exam session."""
@@ -216,7 +216,8 @@ async def batch_generate_comments(
     scores = await service.get_scores_by_exam_session(session_id)
 
     if student_ids:
-        scores = [s for s in scores if s.student_id in student_ids]
+        id_list = [s.strip() for s in student_ids.split(",") if s.strip()]
+        scores = [s for s in scores if str(s.student_id) in id_list]
 
     statistics = await service.get_statistics(session_id)
     results = []

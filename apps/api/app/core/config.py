@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     OCR_PROVIDER: str = "tesseract"
     AI_PROVIDER: str = "openai"
     OPENAI_API_KEY: Optional[str] = None
+    LLM_API_KEY: Optional[str] = None
+    LLM_BASE_URL: Optional[str] = None
+    LLM_MODEL: str = "kimi-k2.5"
     
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
