@@ -103,7 +103,7 @@ export default function NewAnnouncementPage() {
         status: 'draft',
       };
       const res = await api.createAnnouncement(payload);
-      const id = res.data?.id || res.id;
+      const id = res.data?.id;
       router.push(`/dashboard/apple/announcements/${id}`);
     } catch (e: any) {
       setError(e.message || '保存失敗');

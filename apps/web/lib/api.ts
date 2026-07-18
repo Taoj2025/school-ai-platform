@@ -12,7 +12,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async fetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  private async fetch<T>(endpoint: string, options: FetchOptions = {}): Promise<{ data: T; meta: any }> {
     const { params, ...fetchOptions } = options;
     
     let url = `${this.baseUrl}${endpoint}`;
@@ -294,9 +294,7 @@ class ApiClient {
   }
 
   async getExamScores(id: string) {
-    return this.fetch<{ items: any[]; total: number }>(
-      `/api/v1/grade/exam-sessions/${id}/scores`
-    );
+    return this.fetch<any[]>(`/api/v1/grade/exam-sessions/${id}/scores`);
   }
 
   async createScore(data: any) {
@@ -363,7 +361,7 @@ class ApiClient {
     student_id?: string;
     notified?: boolean;
   }) {
-    return this.fetch<{ items: any[]; total: number }>('/api/v1/grade/alerts', {
+    return this.fetch<any[]>('/api/v1/grade/alerts', {
       params,
     });
   }
