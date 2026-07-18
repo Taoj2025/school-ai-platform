@@ -241,7 +241,7 @@ async def generate_certificates(
     return success_response(data=result)
 
 
-@router.get("/{award_id}/script", response_model=dict)
+@router.post("/{award_id}/script", response_model=dict)
 async def generate_script(
     award_id: str,
     request: ScriptGenerationRequest,
