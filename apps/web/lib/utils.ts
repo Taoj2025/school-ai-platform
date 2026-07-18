@@ -108,3 +108,11 @@ export const announcementAudienceLabels: Record<string, string> = {
   grade_X: '年級',
   class_X: '班級',
 };
+
+export function awardTypeLabel(type: string): string {
+  return awardTypeLabels[type] || type || '未分類';
+}
+
+export function awardStatusLabel(status: string): string {
+  return awardStatusLabels[status] || status || '未知';
+}

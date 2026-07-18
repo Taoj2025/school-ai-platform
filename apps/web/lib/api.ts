@@ -94,14 +94,38 @@ class ApiClient {
     });
   }
 
-  async generateCertificates(id: string) {
-    return this.fetch<any>(`/api/v1/apple/awards/${id}/certificates`, {
+  async getAwardScript(id: string) {
+    return this.fetch<any>(`/api/v1/apple/awards/${id}/script`);
+  }
+
+  async getAwardRecipients(id: string) {
+    return this.fetch<{ items: any[]; total: number }>(
+      `/api/v1/apple/awards/${id}/recipients`
+    );
+  }
+
+  async createAwardRecipient(awardId: string, data: any) {
+    return this.fetch<any>(`/api/v1/apple/awards/${awardId}/recipients`, {
       method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 
-  async getAwardScript(id: string) {
-    return this.fetch<any>(`/api/v1/apple/awards/${id}/script`);
+  async generateCertificates(
+    id: string,
+    recipientIds: string[],
+    signatory = 'Principal',
+    ceremonyDate?: string
+  ) {
+    return this.fetch<any>(`/api/v1/apple/awards/${id}/certificates`, {
+      method: 'POST',
+      body: JSON.stringify({
+        recipient_ids: recipientIds,
+        template_id: 'default',
+        signatory,
+        ceremony_date: ceremonyDate,
+      }),
+    });
   }
 
   // ============ Finance API ============

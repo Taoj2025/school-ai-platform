@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const awardTypes = [
   { value: 'academic', label: '學業獎' },
@@ -11,16 +13,20 @@ const awardTypes = [
   { value: 'service', label: '服務獎' },
   { value: 'sports', label: '體育獎' },
   { value: 'art', label: '藝術獎' },
+  { value: 'other', label: '其他獎' },
 ];
 
 export default function NewAwardPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
-    type: 'academic',
+    award_type: 'academic',
     academic_year: '2025-2026',
     semester: '上學期',
+    amount: '',
     description: '',
   });
+  const [saving, setSaving] = useState(false);
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -34,9 +40,24 @@ export default function NewAwardPage() {
     outline: 'none',
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('獎項已創建');
+    setSaving(true);
+    try {
+      await api.createAward({
+        name: formData.name,
+        award_type: formData.award_type,
+        academic_year: formData.academic_year,
+        semester: formData.semester,
+        amount: formData.amount ? Number(formData.amount) : null,
+        description: formData.description,
+      });
+      router.push('/dashboard/apple/awards');
+    } catch (err: any) {
+      alert(err.message || '創建失敗');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -81,8 +102,8 @@ export default function NewAwardPage() {
                   獎項類型 <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  value={formData.award_type}
+                  onChange={(e) => setFormData({ ...formData, award_type: e.target.value })}
                   style={inputStyle}
                 >
                   {awardTypes.map((type) => (
@@ -109,19 +130,33 @@ export default function NewAwardPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
-                學期 <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
-              <select
-                value={formData.semester}
-                onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                style={inputStyle}
-              >
-                <option value="上學期">上學期</option>
-                <option value="下學期">下學期</option>
-                <option value="全學年">全學年</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                  學期 <span style={{ color: 'var(--danger)' }}>*</span>
+                </label>
+                <select
+                  value={formData.semester}
+                  onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+                  style={inputStyle}
+                >
+                  <option value="上學期">上學期</option>
+                  <option value="下學期">下學期</option>
+                  <option value="全學年">全學年</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                  獎金金額 (HKD)
+                </label>
+                <input
+                  type="number"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  style={inputStyle}
+                  placeholder="選填"
+                />
+              </div>
             </div>
 
             <div>
@@ -148,11 +183,12 @@ export default function NewAwardPage() {
             </Link>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-md hover:opacity-90"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-md hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: 'var(--brand)' }}
             >
               <Save className="w-4 h-4" />
-              保存
+              {saving ? '保存中...' : '保存'}
             </button>
           </div>
         </form>
