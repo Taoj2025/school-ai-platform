@@ -32,8 +32,13 @@ def test_shared_api_paths_in_openapi():
         "/api/v1/files/upload",
         "/api/v1/ocr/jobs",
         "/api/v1/ocr/jobs/{job_id}",
+        "/api/v1/ai/jobs",
+        "/api/v1/ai/jobs/{job_id}",
         "/api/v1/ai/generate",
         "/api/v1/audit/logs",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/me",
     ]:
         assert path in paths
 
@@ -45,6 +50,28 @@ def test_apple_module_paths_in_openapi():
         "/api/v1/apple/finance",
         "/api/v1/apple/assets",
         "/api/v1/apple/students",
+    ]:
+        assert path in paths
+
+
+def test_announcement_paths_in_openapi():
+    paths = client.get("/api/v1/openapi.json").json()["paths"]
+    for path in [
+        "/api/v1/announcements",
+        "/api/v1/announcements/generate",
+        "/api/v1/announcements/templates",
+    ]:
+        assert path in paths
+
+
+def test_award_paths_in_openapi():
+    paths = client.get("/api/v1/openapi.json").json()["paths"]
+    for path in [
+        "/api/v1/apple/awards",
+        "/api/v1/apple/awards/export",
+        "/api/v1/apple/awards/{award_id}/calculate",
+        "/api/v1/apple/awards/{award_id}/certificates",
+        "/api/v1/apple/awards/{award_id}/script",
     ]:
         assert path in paths
 

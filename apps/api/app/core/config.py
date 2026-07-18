@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     OCR_PROVIDER: str = "tesseract"
     AI_PROVIDER: str = "openai"
     OPENAI_API_KEY: Optional[str] = None
+    
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_BUCKET: str = "school-ai-files"
+    MINIO_SECURE: bool = False
 
     class Config:
         env_file = ".env"

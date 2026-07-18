@@ -6,6 +6,7 @@ from ..modules.ocr.models import OcrJob
 from ..modules.ai.models import AiJob
 from ..modules.audit.models import AuditLog
 from ..modules.approvals.models import Approval
+from ..modules.announcements.models import Announcement, AnnouncementTemplate, SendLog
 from ..modules.apple.awards.models import AppleAward, AppleAwardRecipient
 from ..modules.apple.finance.models import AppleFinanceRecord, AppleQuotation
 from ..modules.apple.assets.models import AppleAsset, AppleAssetMovement
@@ -15,6 +16,7 @@ __all__ = [
     "Base",
     "User", "Role", "UserRole", "Permission", "RolePermission",
     "File", "OcrJob", "AiJob", "AuditLog", "Approval",
+    "Announcement", "AnnouncementTemplate", "SendLog",
     "AppleAward", "AppleAwardRecipient",
     "AppleFinanceRecord", "AppleQuotation",
     "AppleAsset", "AppleAssetMovement",
