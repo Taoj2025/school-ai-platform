@@ -15,114 +15,129 @@ import {
   FileSpreadsheet,
   FileText,
 } from 'lucide-react';
-import {
-  getAllAssignments,
-  deleteAssignment,
-  type StudentAwardAssignment,
-} from '@/lib/awardAssignmentStore';
+import { api } from '@/lib/api';
 import * as XLSX from 'xlsx';
 
-const paymentStatusMap = {
+const paymentStatusMap: Record<string, { label: string; color: string; bgColor: string }> = {
+  nominated: { label: '已提名', color: 'var(--warning)', bgColor: 'var(--warning-bg)' },
   pending: { label: '待發放', color: 'var(--warning)', bgColor: 'var(--warning-bg)' },
+  issued: { label: '已發放', color: 'var(--good)', bgColor: 'var(--good-bg)' },
   paid: { label: '已發放', color: 'var(--good)', bgColor: 'var(--good-bg)' },
   cancelled: { label: '已取消', color: 'var(--danger)', bgColor: 'var(--danger-bg)' },
 };
 
-const awardTypeMap = {
-  academic: '學業獎',
-  conduct: '品行獎',
-  service: '服務獎',
-  sports: '體育獎',
-  art: '藝術獎',
+type Recipient = {
+  id: string;
+  award_id: string;
+  student_id: string;
+  student_name: string | null;
+  class_name: string | null;
+  amount: number | null;
+  status: string;
+  reason: string | null;
+  award_name: string;
+  award_type: string;
+  created_at: string;
 };
 
 export default function StudentBountyPage() {
-  const [assignments, setAssignments] = useState<StudentAwardAssignment[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAward, setFilterAward] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Reload data from store
-  const reload = () => {
-    setAssignments(getAllAssignments());
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const awardsRes = await api.getAwards({ page: 1, page_size: 200 });
+      const awards = (awardsRes.data?.items ?? []) as any[];
+      const nameById: Record<string, { name: string; type: string }> = {};
+      awards.forEach((a) => { nameById[a.id] = { name: a.name, type: a.type || 'other' }; });
+
+      const lists = await Promise.all(
+        awards.map((a) => api.getAwardRecipients(a.id).then((r: any) => r.data?.items ?? []))
+      );
+      const merged: Recipient[] = [];
+      lists.forEach((items: any[], idx: number) => {
+        const aw = awards[idx];
+        items.forEach((r: any) => {
+          merged.push({
+            id: r.id,
+            award_id: r.award_id,
+            student_id: r.student_id,
+            student_name: r.student_name,
+            class_name: r.class_name,
+            amount: r.amount,
+            status: r.status,
+            reason: r.reason,
+            award_name: nameById[r.award_id]?.name ?? aw.name,
+            award_type: nameById[r.award_id]?.type ?? aw.type ?? 'other',
+            created_at: r.created_at,
+          });
+        });
+      });
+      setRecipients(merged);
+    } catch (e: any) {
+      setError(e.message || '載入失敗');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => {
-    reload();
-    setLoading(false);
-    // Listen for cross-tab updates
-    const handler = (e: StorageEvent) => {
-      if (e.key === 'apple_student_awards') {
-        reload();
-      }
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, []);
+  useEffect(() => { load(); }, []);
 
-  // Filter logic
-  const filteredAssignments = assignments.filter((a) => {
+  const filtered = recipients.filter((a) => {
     const matchesSearch =
-      a.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.student_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.student_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.award_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAward = !filterAward || a.award_name === filterAward;
-    const matchesStatus = !filterStatus || a.payment_status === filterStatus;
+    const matchesStatus = !filterStatus || a.status === filterStatus;
     return matchesSearch && matchesAward && matchesStatus;
   });
 
-  // Calculate statistics
   const stats = {
-    total: assignments.length,
-    totalAmount: assignments.reduce((sum, a) => sum + a.bounty_amount, 0),
-    paidAmount: assignments.filter((a) => a.payment_status === 'paid').reduce((sum, a) => sum + a.bounty_amount, 0),
-    pendingAmount: assignments.filter((a) => a.payment_status === 'pending').reduce((sum, a) => sum + a.bounty_amount, 0),
-    studentCount: new Set(assignments.map((a) => a.student_id)).size,
+    total: recipients.length,
+    totalAmount: recipients.reduce((sum, a) => sum + (a.amount || 0), 0),
+    paidAmount: recipients.filter((a) => a.status === 'issued' || a.status === 'paid').reduce((sum, a) => sum + (a.amount || 0), 0),
+    pendingAmount: recipients.filter((a) => a.status !== 'issued' && a.status !== 'paid').reduce((sum, a) => sum + (a.amount || 0), 0),
+    studentCount: new Set(recipients.map((a) => a.student_id)).size,
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, awardId: string, name: string) => {
     if (confirm(`確定要刪除「${name}」的獎項記錄嗎？`)) {
-      if (deleteAssignment(id)) {
-        reload();
+      try {
+        await api.deleteAwardRecipient(awardId, id);
+        load();
+      } catch (e: any) {
+        alert(e.message || '刪除失敗');
       }
     }
   };
 
   const handleExportExcel = () => {
-    if (filteredAssignments.length === 0) {
+    if (filtered.length === 0) {
       alert('沒有可導出的數據');
       return;
     }
-
     const wsData = [
-      ['序號', '學號', '學生姓名', '班別', '獎項名稱', '獎項類型', '學年', '學期', '獎金金額 (HKD)', '狀態', '頒發日期', '發放日期', '備註'],
-      ...filteredAssignments.map((a, idx) => [
+      ['序號', '學生姓名', '班別', '獎項名稱', '獎金金額 (HKD)', '狀態', '建立日期'],
+      ...filtered.map((a, idx) => [
         idx + 1,
-        a.student_no,
-        a.student_name,
-        a.student_class,
+        a.student_name || '',
+        a.class_name || '',
         a.award_name,
-        awardTypeMap[a.award_type as keyof typeof awardTypeMap] || a.award_type,
-        a.academic_year,
-        a.semester,
-        a.bounty_amount,
-        paymentStatusMap[a.payment_status].label,
-        a.issue_date,
-        a.payment_date || '-',
-        a.remark || '',
+        a.amount || 0,
+        paymentStatusMap[a.status]?.label || a.status,
+        (a.created_at || '').slice(0, 10),
       ]),
     ];
-
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols'] = [
-      { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 8 }, { wch: 18 },
-      { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 10 },
-      { wch: 12 }, { wch: 12 }, { wch: 20 },
-    ];
     XLSX.utils.book_append_sheet(wb, ws, '學生獎金記錄');
-
     const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a');
@@ -134,11 +149,8 @@ export default function StudentBountyPage() {
     URL.revokeObjectURL(link.href);
   };
 
-  const formatCurrency = (amount: number) => {
-    return `HK$ ${amount.toLocaleString('zh-HK')}`;
-  };
-
-  const uniqueAwards = Array.from(new Set(assignments.map((a) => a.award_name)));
+  const formatCurrency = (amount: number) => `HK$ ${amount.toLocaleString('zh-HK')}`;
+  const uniqueAwards = Array.from(new Set(recipients.map((a) => a.award_name)));
 
   if (loading) {
     return (
@@ -155,7 +167,12 @@ export default function StudentBountyPage() {
     <>
       <Topbar title="學生獎金管理" />
       <div className="p-6 space-y-6">
-        {/* Header */}
+        {error && (
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            {error}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>學生獎金記錄</h2>
@@ -183,7 +200,6 @@ export default function StudentBountyPage() {
           </div>
         </div>
 
-        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center justify-between">
@@ -191,72 +207,53 @@ export default function StudentBountyPage() {
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>總記錄數</p>
                 <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text)' }}>{stats.total}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
                 <FileText className="w-6 h-6" />
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
-              涵蓋 {stats.studentCount} 位學生
-            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>涵蓋 {stats.studentCount} 位學生</p>
           </div>
 
           <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>獎金總額</p>
-                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text)' }}>
-                  {formatCurrency(stats.totalAmount)}
-                </p>
+                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text)' }}>{formatCurrency(stats.totalAmount)}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
                 <DollarSign className="w-6 h-6" />
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
-              所有獎項合計
-            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>所有獎項合計</p>
           </div>
 
           <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>已發放</p>
-                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--good)' }}>
-                  {formatCurrency(stats.paidAmount)}
-                </p>
+                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--good)' }}>{formatCurrency(stats.paidAmount)}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--good-bg)', color: 'var(--good)' }}>
                 <Award className="w-6 h-6" />
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
-              已支付給學生
-            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>已支付給學生</p>
           </div>
 
           <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>待發放</p>
-                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--warning)' }}>
-                  {formatCurrency(stats.pendingAmount)}
-                </p>
+                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--warning)' }}>{formatCurrency(stats.pendingAmount)}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' }}>
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' }}>
                 <User className="w-6 h-6" />
               </div>
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
-              待處理金額
-            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>待處理金額</p>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative flex-1 min-w-[200px]">
@@ -270,7 +267,6 @@ export default function StudentBountyPage() {
                 style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}
               />
             </div>
-
             <select
               value={filterAward}
               onChange={(e) => setFilterAward(e.target.value)}
@@ -282,7 +278,6 @@ export default function StudentBountyPage() {
                 <option key={award} value={award}>{award}</option>
               ))}
             </select>
-
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -297,112 +292,58 @@ export default function StudentBountyPage() {
           </div>
         </div>
 
-        {/* Assignments Table */}
         <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    學生
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    獎項
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    學年/學期
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    獎金金額
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    狀態
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    頒發日期
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-                    操作
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>學生</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>獎項</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>獎金金額</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>狀態</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>建立日期</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>操作</th>
                 </tr>
               </thead>
               <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
-                {filteredAssignments.length === 0 ? (
+                {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>
-                      暫無獎金記錄
-                    </td>
+                    <td colSpan={6} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>暫無獎金記錄</td>
                   </tr>
                 ) : (
-                  filteredAssignments.map((assignment) => (
-                    <tr key={assignment.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
+                  filtered.map((r) => (
+                    <tr key={r.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
-                            style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
-                            {assignment.student_name.charAt(0)}
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
+                            {(r.student_name || '?').charAt(0)}
                           </div>
                           <div>
-                            <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>{assignment.student_name}</div>
-                            <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                              {assignment.student_no} | {assignment.student_class}
-                            </div>
+                            <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>{r.student_name || r.student_id}</div>
+                            <div className="text-xs" style={{ color: 'var(--muted)' }}>{r.class_name || '-'}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>{assignment.award_name}</div>
-                        <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                          {awardTypeMap[assignment.award_type as keyof typeof awardTypeMap] || assignment.award_type}
-                        </div>
+                        <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>{r.award_name}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm" style={{ color: 'var(--text)' }}>{assignment.academic_year}</div>
-                        <div className="text-xs" style={{ color: 'var(--muted)' }}>{assignment.semester}</div>
+                        <div className="text-base font-bold" style={{ color: 'var(--text)' }}>{formatCurrency(r.amount || 0)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-base font-bold" style={{ color: 'var(--text)' }}>
-                          {formatCurrency(assignment.bounty_amount)}
-                        </div>
-                        {assignment.remark && (
-                          <div className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-                            {assignment.remark}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className="px-2 py-1 text-xs font-medium rounded-full"
-                          style={{
-                            backgroundColor: paymentStatusMap[assignment.payment_status].bgColor,
-                            color: paymentStatusMap[assignment.payment_status].color,
-                          }}
-                        >
-                          {paymentStatusMap[assignment.payment_status].label}
+                        <span className="px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: paymentStatusMap[r.status]?.bgColor, color: paymentStatusMap[r.status]?.color }}>
+                          {paymentStatusMap[r.status]?.label || r.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text)' }}>
-                        {assignment.issue_date}
-                        {assignment.payment_date && (
-                          <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                            發放：{assignment.payment_date}
-                          </div>
-                        )}
+                        {(r.created_at || '').slice(0, 10)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/dashboard/apple/awards/students/${assignment.id}/edit`}
-                            className="p-2 rounded-md hover:opacity-70"
-                            style={{ color: 'var(--brand)' }}
-                          >
+                          <Link href={`/dashboard/apple/awards/students/${r.id}/edit`} className="p-2 rounded-md hover:opacity-70" style={{ color: 'var(--brand)' }}>
                             <Edit className="w-4 h-4" />
                           </Link>
-                          <button
-                            onClick={() => handleDelete(assignment.id, `${assignment.student_name} - ${assignment.award_name}`)}
-                            className="p-2 rounded-md hover:opacity-70"
-                            style={{ color: 'var(--danger)' }}
-                          >
+                          <button onClick={() => handleDelete(r.id, r.award_id, r.student_name || '記錄')} className="p-2 rounded-md hover:opacity-70" style={{ color: 'var(--danger)' }}>
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -415,10 +356,9 @@ export default function StudentBountyPage() {
           </div>
         </div>
 
-        {assignments.length > 0 && (
+        {recipients.length > 0 && (
           <div className="text-center text-sm" style={{ color: 'var(--muted)' }}>
-            共 {filteredAssignments.length} 條記錄
-            {filteredAssignments.length !== assignments.length && ` (篩選自 ${assignments.length} 條)`}
+            共 {filtered.length} 條記錄{filtered.length !== recipients.length && ` (篩選自 ${recipients.length} 條)`}
           </div>
         )}
       </div>

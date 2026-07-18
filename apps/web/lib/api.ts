@@ -111,6 +111,20 @@ class ApiClient {
     });
   }
 
+  async updateAwardRecipient(awardId: string, recipientId: string, data: any) {
+    return this.fetch<any>(
+      `/api/v1/apple/awards/${awardId}/recipients/${recipientId}`,
+      { method: 'PATCH', body: JSON.stringify(data) }
+    );
+  }
+
+  async deleteAwardRecipient(awardId: string, recipientId: string) {
+    return this.fetch<any>(
+      `/api/v1/apple/awards/${awardId}/recipients/${recipientId}`,
+      { method: 'DELETE' }
+    );
+  }
+
   async generateCertificates(
     id: string,
     recipientIds: string[],

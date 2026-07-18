@@ -5,6 +5,8 @@ import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, FileText, Download, Eye, Check, X } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { api } from '@/lib/api';
+import { normalizeStudent } from '@/lib/studentStore';
 
 // Common input style using CSS variables
 const inputStyle: React.CSSProperties = {
@@ -19,19 +21,7 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
-// Mock students data
-const mockStudents = [
-  { id: '1', name: '陳小明', class: '1A', student_no: '2025001' },
-  { id: '2', name: '李美美', class: '1A', student_no: '2025002' },
-  { id: '3', name: '張大文', class: '1B', student_no: '2025003' },
-  { id: '4', name: '王小红', class: '1B', student_no: '2025004' },
-  { id: '5', name: '劉志偉', class: '2A', student_no: '2024001' },
-  { id: '6', name: '黃淑芬', class: '2A', student_no: '2024002' },
-  { id: '7', name: '周杰倫', class: '2B', student_no: '2024003' },
-  { id: '8', name: '吳依琳', class: '3A', student_no: '2023001' },
-  { id: '9', name: '孫雅琪', class: '3A', student_no: '2023002' },
-  { id: '10', name: '鄭宇翔', class: '3B', student_no: '2023003' },
-];
+type CertStudent = { id: string; name: string; class: string; student_no: string };
 
 const awardOptions = [
   { value: '學業優異獎', label: '學業優異獎', amount: 'HK$1,000' },
@@ -42,6 +32,7 @@ const awardOptions = [
 ];
 
 export default function GenerateCertificatesPage() {
+  const [students, setStudents] = useState<CertStudent[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [awardName, setAwardName] = useState('學業優異獎');
@@ -49,7 +40,25 @@ export default function GenerateCertificatesPage() {
   const [signatory, setSignatory] = useState('陳校長');
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
-  const [previewStudent, setPreviewStudent] = useState<typeof mockStudents[0] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [previewStudent, setPreviewStudent] = useState<CertStudent | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.getStudents({ page: 1, page_size: 200 });
+        const list = (res.data?.items ?? []).map((s: any) => {
+          const n = normalizeStudent(s);
+          return { id: n.id, name: n.name, class: n.class, student_no: n.student_no };
+        });
+        setStudents(list);
+      } catch {
+        setStudents([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const selectedAward = awardOptions.find((a) => a.value === awardName);
 
@@ -58,7 +67,7 @@ export default function GenerateCertificatesPage() {
       setSelectedStudents([]);
       setSelectAll(false);
     } else {
-      setSelectedStudents(mockStudents.map((s) => s.id));
+      setSelectedStudents(students.map((s) => s.id));
       setSelectAll(true);
     }
   };
@@ -72,11 +81,11 @@ export default function GenerateCertificatesPage() {
     }
     setSelectedStudents(newSelected);
     // Update selectAll based on whether all students are selected
-    setSelectAll(newSelected.length === mockStudents.length);
+    setSelectAll(newSelected.length === students.length);
   };
 
   // Generate single certificate HTML
-  const generateCertificateHTML = (student: typeof mockStudents[0]) => {
+  const generateCertificateHTML = (student: CertStudent) => {
     const year = new Date(ceremonyDate).getFullYear();
     const month = new Date(ceremonyDate).getMonth() + 1;
     const day = new Date(ceremonyDate).getDate();
@@ -253,10 +262,10 @@ export default function GenerateCertificatesPage() {
     setGenerating(true);
 
     // Generate certificates and download as individual files
-    const students = mockStudents.filter((s) => selectedStudents.includes(s.id));
+    const chosen = students.filter((s) => selectedStudents.includes(s.id));
 
     // For batch download, create a printable document with all certificates
-    const allCertificates = students.map((student) => {
+    const allCertificates = chosen.map((student) => {
       return `
       <div style="page-break-after: always;">
         ${generateCertificateHTML(student)}
@@ -301,9 +310,9 @@ export default function GenerateCertificatesPage() {
   };
 
   const handleDownloadAll = async () => {
-    const students = mockStudents.filter((s) => selectedStudents.includes(s.id));
-    
-    if (students.length === 0) {
+    const chosen = students.filter((s) => selectedStudents.includes(s.id));
+
+    if (chosen.length === 0) {
       alert('請選擇至少一名學生');
       return;
     }
@@ -329,8 +338,8 @@ export default function GenerateCertificatesPage() {
 
       let isFirst = true;
 
-      for (let i = 0; i < students.length; i++) {
-        const student = students[i];
+      for (let i = 0; i < chosen.length; i++) {
+        const student = chosen[i];
         
         // Generate certificate HTML
         const certHTML = generateCertificateHTML(student);
@@ -375,7 +384,7 @@ export default function GenerateCertificatesPage() {
   };
 
   const handlePreview = (studentId: string) => {
-    const student = mockStudents.find((s) => s.id === studentId);
+    const student = students.find((s) => s.id === studentId);
     if (student) {
       setPreviewStudent(student);
     }
@@ -535,7 +544,20 @@ export default function GenerateCertificatesPage() {
                 </tr>
               </thead>
               <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
-                {mockStudents.map((student) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                      載入學生中...
+                    </td>
+                  </tr>
+                ) : students.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                      暫無學生資料
+                    </td>
+                  </tr>
+                ) : (
+                  students.map((student) => (
                   <tr key={student.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
@@ -566,7 +588,7 @@ export default function GenerateCertificatesPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>

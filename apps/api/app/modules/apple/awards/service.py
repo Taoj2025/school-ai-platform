@@ -167,7 +167,21 @@ class AwardService:
                 setattr(recipient, key, value)
         
         await self.db.flush()
+        await self.db.commit()
+        await self.db.refresh(recipient)
         return recipient
+
+    async def delete_recipient(self, recipient_id: str) -> bool:
+        """Delete a recipient."""
+        result = await self.db.execute(
+            select(AppleAwardRecipient).where(AppleAwardRecipient.id == recipient_id)
+        )
+        recipient = result.scalar_one_or_none()
+        if not recipient:
+            return False
+        await self.db.delete(recipient)
+        await self.db.commit()
+        return True
     
     async def calculate_scholarships(
         self,

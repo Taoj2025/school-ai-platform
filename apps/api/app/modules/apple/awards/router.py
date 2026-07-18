@@ -206,6 +206,19 @@ async def update_recipient(
     return success_response(data=AwardRecipientResponse.model_validate(recipient).model_dump())
 
 
+@router.delete("/{award_id}/recipients/{recipient_id}", response_model=dict)
+async def delete_recipient(
+    award_id: str,
+    recipient_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    service = AwardService(db)
+    deleted = await service.delete_recipient(recipient_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+    return success_response(data={"deleted": True, "id": recipient_id})
+
+
 @router.post("/{award_id}/calculate", response_model=dict)
 async def calculate_scholarships(
     award_id: str,
