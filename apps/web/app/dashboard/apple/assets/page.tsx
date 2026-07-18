@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import {
   Plus,
@@ -17,25 +17,7 @@ import {
 } from 'lucide-react';
 import UploadAssetDialog from '@/components/modules/apple/UploadAssetDialog';
 import AssetMovementDialog from '@/components/modules/apple/AssetMovementDialog';
-
-// Mock data
-const mockAssets = [
-  { id: '1', name: '投影機 EP-01', code: 'IT-2025-001', category: 'equipment', location: '301 課室', status: 'normal', purchase_date: '2024-03-15', value: 8500 },
-  { id: '2', name: '辦公桌', code: 'FR-2025-001', category: 'furniture', location: '校長室', status: 'normal', purchase_date: '2023-09-01', value: 3200 },
-  { id: '3', name: '打印機 HP LaserJet', code: 'IT-2025-002', category: 'equipment', location: '文印室', status: 'maintenance', purchase_date: '2024-01-10', value: 5600 },
-  { id: '4', name: '課室冷氣機', code: 'AC-2025-001', category: 'equipment', location: '201 課室', status: 'normal', purchase_date: '2024-06-20', value: 12000 },
-  { id: '5', name: '會議室椅子 x 20', code: 'FR-2025-002', category: 'furniture', location: '會議室', status: 'normal', purchase_date: '2023-11-05', value: 8000 },
-];
-
-const mockMovements = [
-  { id: '1', asset_code: 'IT-2025-001', asset_name: '投影機 EP-01', from_location: '301 課室', to_location: '禮堂', move_date: '2025-09-15', moved_by: '張主任' },
-  { id: '2', asset_code: 'FR-2025-002', asset_name: '會議室椅子 x 20', from_location: '會議室', to_location: '活動室', move_date: '2025-09-20', moved_by: '李職員' },
-];
-
-const mockStocktakes = [
-  { id: '1', name: '2025年度資產盤點', date: '2025-09-01', status: 'completed', total: 45, checked: 45, missing: 0 },
-  { id: '2', name: 'IT設備季度核查', date: '2025-10-01', status: 'in_progress', total: 28, checked: 15, missing: 0 },
-];
+import { api } from '@/lib/api';
 
 const categories = [
   { value: 'equipment', label: '設備' },
@@ -45,16 +27,57 @@ const categories = [
   { value: 'other', label: '其他' },
 ];
 
+type Asset = {
+  id: string;
+  asset_code: string;
+  name: string;
+  category: string;
+  location: string;
+  status: string;
+  current_value?: number;
+  purchase_date?: string;
+};
+
 export default function AssetsPage() {
   const [activeTab, setActiveTab] = useState<'list' | 'movements' | 'stocktake'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssetDialog, setShowAssetDialog] = useState(false);
   const [showUploadAssetDialog, setShowUploadAssetDialog] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<{ id: string; name: string; currentLocation: string } | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [movements, setMovements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredAssets = mockAssets.filter((asset) =>
+  const loadAssets = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.getAssets({ page: 1, page_size: 200 });
+      setAssets((res.data?.items ?? []).map((a: any) => ({
+        id: a.id,
+        asset_code: a.asset_code,
+        name: a.name,
+        category: a.category,
+        location: a.location,
+        status: a.status,
+        current_value: a.current_value,
+        purchase_date: a.purchase_date ? String(a.purchase_date).slice(0, 10) : undefined,
+      })));
+    } catch (e: any) {
+      setError(e.message || '載入失敗');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAssets();
+  }, [loadAssets]);
+
+  const filteredAssets = assets.filter((asset) =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.code.toLowerCase().includes(searchTerm.toLowerCase())
+    asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCurrency = (amount: number) => {
@@ -113,7 +136,7 @@ export default function AssetsPage() {
           >
             <Package className="w-6 h-6 mb-2" style={{ color: activeTab === 'list' ? 'var(--brand)' : 'var(--muted)' }} />
             <p className="font-medium">資產列表</p>
-            <p className="text-sm" style={{ color: 'var(--muted)' }}>{mockAssets.length} 件資產</p>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>{assets.length} 件資產</p>
           </button>
           <button
             onClick={() => setActiveTab('movements')}
@@ -126,7 +149,7 @@ export default function AssetsPage() {
           >
             <ArrowRightLeft className="w-6 h-6 mb-2" style={{ color: activeTab === 'movements' ? 'var(--brand)' : 'var(--muted)' }} />
             <p className="font-medium">移動記錄</p>
-            <p className="text-sm" style={{ color: 'var(--muted)' }}>{mockMovements.length} 條記錄</p>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>{movements.length} 條記錄</p>
           </button>
           <button
             onClick={() => setActiveTab('stocktake')}
@@ -139,7 +162,7 @@ export default function AssetsPage() {
           >
             <ScanLine className="w-6 h-6 mb-2" style={{ color: activeTab === 'stocktake' ? 'var(--brand)' : 'var(--muted)' }} />
             <p className="font-medium">庫存盤點</p>
-            <p className="text-sm" style={{ color: 'var(--muted)' }}>{mockStocktakes.length} 個任務</p>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>盤點管理</p>
           </button>
         </div>
 
@@ -183,7 +206,7 @@ export default function AssetsPage() {
                     ) : (
                       filteredAssets.map((asset) => (
                         <tr key={asset.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
-                          <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--text)' }}>{asset.code}</td>
+                          <td className="px-4 py-3 text-sm font-mono" style={{ color: 'var(--text)' }}>{asset.asset_code}</td>
                           <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>{asset.name}</td>
                           <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>
                             {categories.find((c) => c.value === asset.category)?.label}
@@ -198,17 +221,28 @@ export default function AssetsPage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                                <Eye className="w-4 h-4" />
-                              </button>
                               <button
                                 onClick={() => setSelectedAsset({ id: asset.id, name: asset.name, currentLocation: asset.location })}
                                 className="p-1.5 rounded hover:opacity-70"
                                 style={{ color: 'var(--brand)' }}
+                                title="移動"
                               >
                                 <ArrowRightLeft className="w-4 h-4" />
                               </button>
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm(`確定刪除資產「${asset.name}」？`)) return;
+                                  try {
+                                    await api.deleteAsset(asset.id);
+                                    await loadAssets();
+                                  } catch (e: any) {
+                                    alert(e.message || '刪除失敗');
+                                  }
+                                }}
+                                className="p-1.5 rounded hover:opacity-70"
+                                style={{ color: 'var(--danger)' }}
+                                title="刪除"
+                              >
                                 <Edit className="w-4 h-4" />
                               </button>
                             </div>
@@ -236,23 +270,23 @@ export default function AssetsPage() {
                     </tr>
                   </thead>
                   <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
-                    {mockMovements.length === 0 ? (
+                    {movements.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
                           暫無移動記錄
                         </td>
                       </tr>
                     ) : (
-                      mockMovements.map((move) => (
-                        <tr key={move.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
-                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{move.move_date}</td>
+                      movements.map((move: any, idx: number) => (
+                        <tr key={move.id || idx} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{move.moved_at ? String(move.moved_at).slice(0, 10) : (move.move_date || '')}</td>
                           <td className="px-4 py-3">
-                            <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>{move.asset_name}</div>
-                            <div className="text-xs" style={{ color: 'var(--muted)' }}>{move.asset_code}</div>
+                            <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>{move.asset_name || (selectedAsset?.name ?? '')}</div>
+                            <div className="text-xs" style={{ color: 'var(--muted)' }}>{move.asset_code || ''}</div>
                           </td>
                           <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{move.from_location}</td>
                           <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{move.to_location}</td>
-                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{move.moved_by}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{move.moved_by || '-'}</td>
                         </tr>
                       ))
                     )}
@@ -272,40 +306,8 @@ export default function AssetsPage() {
                   開始新盤點
                 </button>
               </div>
-              <div className="space-y-4">
-                {mockStocktakes.map((task) => (
-                  <div key={task.id} className="rounded-lg p-4" style={{ borderWidth: '1px', borderColor: 'var(--border)' }}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium" style={{ color: 'var(--text)' }}>{task.name}</h4>
-                        <p className="text-sm" style={{ color: 'var(--muted)' }}>{task.date}</p>
-                      </div>
-                      <span className="px-2 py-1 text-xs font-medium rounded-full"
-                        style={{ backgroundColor: task.status === 'completed' ? 'var(--good-bg)' : 'var(--info-bg)', color: task.status === 'completed' ? 'var(--good)' : 'var(--info)' }}>
-                        {task.status === 'completed' ? '已完成' : '進行中'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${(task.checked / task.total) * 100}%`, backgroundColor: 'var(--brand)' }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-sm" style={{ color: 'var(--muted)' }}>
-                        {task.checked} / {task.total}
-                      </span>
-                      {task.status === 'completed' && task.missing === 0 && (
-                        <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--good)' }}>
-                          <CheckCircle className="w-4 h-4" />
-                          全部完成
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                暫無盤點任務
               </div>
             </div>
           )}
@@ -314,7 +316,10 @@ export default function AssetsPage() {
 
       {/* Asset Dialog */}
       {showAssetDialog && (
-        <AssetDialog onClose={() => setShowAssetDialog(false)} />
+        <AssetDialog
+          onClose={() => setShowAssetDialog(false)}
+          onSaved={() => { setShowAssetDialog(false); loadAssets(); }}
+        />
       )}
 
       {/* Upload Asset Dialog */}
@@ -332,16 +337,30 @@ export default function AssetsPage() {
         isOpen={!!selectedAsset}
         onClose={() => setSelectedAsset(null)}
         asset={selectedAsset}
-        onSubmit={(data) => {
-          alert(`資產已從 ${data.from_location} 搬移到 ${data.to_location}`);
-          setSelectedAsset(null);
+        onSubmit={async (data) => {
+          try {
+            if (selectedAsset) {
+              await api.recordMovement(selectedAsset.id, {
+                movement_type: 'transfer',
+                movement_date: data.move_date,
+                from_location: data.from_location,
+                to_location: data.to_location,
+                reason: data.reason,
+              });
+              await api.updateAsset(selectedAsset.id, { location: data.to_location });
+            }
+            setSelectedAsset(null);
+            await loadAssets();
+          } catch (e: any) {
+            alert(e.message || '搬移失敗');
+          }
         }}
       />
     </>
   );
 }
 
-function AssetDialog({ onClose }: { onClose: () => void }) {
+function AssetDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -350,6 +369,8 @@ function AssetDialog({ onClose }: { onClose: () => void }) {
     purchase_date: '',
     value: '',
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -363,10 +384,25 @@ function AssetDialog({ onClose }: { onClose: () => void }) {
     outline: 'none',
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('資產已添加');
-    onClose();
+    setSaving(true);
+    setError(null);
+    try {
+      await api.createAsset({
+        asset_code: formData.code,
+        name: formData.name,
+        category: formData.category,
+        location: formData.location,
+        purchase_date: formData.purchase_date || undefined,
+        current_value: formData.value ? Number(formData.value) : undefined,
+        purchase_price: formData.value ? Number(formData.value) : undefined,
+      });
+      onSaved();
+    } catch (err: any) {
+      setError(err.message || '添加失敗');
+      setSaving(false);
+    }
   };
 
   return (
@@ -442,21 +478,29 @@ function AssetDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
 
+          {error && (
+            <div className="rounded-md p-3" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              {error}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border rounded-md hover:opacity-80"
+              disabled={saving}
+              className="px-4 py-2 border rounded-md hover:opacity-80 disabled:opacity-50"
               style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             >
               取消
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-white rounded-md hover:opacity-90"
+              disabled={saving}
+              className="px-4 py-2 text-white rounded-md hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: 'var(--brand)' }}
             >
-              保存
+              {saving ? '保存中...' : '保存'}
             </button>
           </div>
         </form>

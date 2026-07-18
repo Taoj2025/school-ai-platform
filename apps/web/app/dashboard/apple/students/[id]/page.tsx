@@ -5,47 +5,15 @@ import { useParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Edit, FileText, Download, User, Award, X } from 'lucide-react';
-import { getStudentById } from '@/lib/studentStore';
-
-// Mock student data (default fallback)
-const mockStudent = {
-  id: '1',
-  name: '陳小明',
-  student_no: '2025001',
-  class: '1A',
-  gender: 'M',
-  enrollment_date: '2025-09-01',
-  status: 'active',
-  date_of_birth: '2013-05-15',
-  id_number: 'A123456(7)',
-  parent_name: '陳先生',
-  parent_phone: '9876-5432',
-  address: '香港九龍彩虹區彩虹道123號',
-};
-
-const mockAttendance = [
-  { date: '2025-09-15', status: 'present', remark: '' },
-  { date: '2025-09-16', status: 'present', remark: '' },
-  { date: '2025-09-17', status: 'absent', remark: '病假' },
-  { date: '2025-09-18', status: 'present', remark: '' },
-  { date: '2025-09-19', status: 'present', remark: '' },
-];
-
-const mockAwards = [
-  { name: '學業進步獎', date: '2025-06-30', semester: '2024-2025 下學期' },
-  { name: '服務精神獎', date: '2025-06-30', semester: '2024-2025 下學期' },
-];
-
-const mockCertificates = [
-  { name: '獎學金證明', issue_date: '2025-06-30', type: 'scholarship' },
-  { name: '操行獎勵證明', issue_date: '2025-06-30', type: 'conduct' },
-];
+import { api } from '@/lib/api';
+import { normalizeStudent, type Student } from '@/lib/studentStore';
 
 export default function StudentDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const [activeTab, setActiveTab] = useState<'info' | 'attendance' | 'awards' | 'certificates'>('info');
-  const [student, setStudent] = useState(mockStudent);
+  const [student, setStudent] = useState<Student | null>(null);
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCertDialog, setShowCertDialog] = useState(false);
   const [selectedCertType, setSelectedCertType] = useState<string>('study');
@@ -53,16 +21,25 @@ export default function StudentDetailPage() {
 
   // Load student data based on ID
   useEffect(() => {
-    if (id) {
-      const studentData = getStudentById(id);
-      if (studentData) {
-        setStudent(studentData as typeof mockStudent);
-      } else {
-        // Fallback to default mock data with adjusted ID
-        setStudent({ ...mockStudent, id });
+    if (!id) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await api.getStudent(id);
+        setStudent(normalizeStudent(res.data));
+        try {
+          const certRes = await api.getStudentCertificates(id);
+          const certData: any = certRes.data;
+          setCertificates(Array.isArray(certData) ? certData : (certData?.items ?? []));
+        } catch {
+          setCertificates([]);
+        }
+      } catch {
+        setStudent(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }
+    })();
   }, [id]);
 
   const getStatusLabel = (status: string) => {
@@ -112,6 +89,9 @@ export default function StudentDetailPage() {
       const certTypeLabel = certTypes.find((c) => c.value === selectedCertType)?.label || '證明';
       const today = new Date();
       const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+      const sName = student?.name ?? '';
+      const sNo = student?.student_no ?? '';
+      const sClass = student?.class ?? '';
 
       container.innerHTML = `
         <div style="font-family: 'Microsoft JhengHei', 'PingFang TC', serif; padding: 60px 80px; border: 8px double #8b4513; background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%); min-height: 1000px;">
@@ -124,9 +104,9 @@ export default function StudentDetailPage() {
           <div style="font-size: 16px; line-height: 2.5; color: #333; margin: 40px 0; text-indent: 2em;">
             <p>茲證明本校學生</p>
             <p style="text-align: center; font-size: 24px; font-weight: bold; color: #8b4513; margin: 20px 0;">
-              ${student.name}（學號：${student.student_no}）
+              ${sName}（學號：${sNo}）
             </p>
-            <p>現於本校 ${student.class} 班就讀，${selectedCertType === 'study' ? '在校期間表現良好，特此證明。' : selectedCertType === 'conduct' ? '品行端正，遵守校規，特此證明。' : selectedCertType === 'scholarship' ? '榮獲本校獎學金，特此證明。' : '出席記錄良好，特此證明。'}</p>
+            <p>現於本校 ${sClass} 班就讀，${selectedCertType === 'study' ? '在校期間表現良好，特此證明。' : selectedCertType === 'conduct' ? '品行端正，遵守校規，特此證明。' : selectedCertType === 'scholarship' ? '榮獲本校獎學金，特此證明。' : '出席記錄良好，特此證明。'}</p>
           </div>
 
           <div style="margin-top: 80px; display: flex; justify-content: space-between;">
@@ -173,7 +153,7 @@ export default function StudentDetailPage() {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-      const fileName = `${certTypeLabel}_${student.name}_${student.student_no}.pdf`;
+      const fileName = `${certTypeLabel}_${sName}_${sNo}.pdf`;
       pdf.save(fileName);
 
       setShowCertDialog(false);
@@ -191,6 +171,17 @@ export default function StudentDetailPage() {
         <Topbar title="學生詳情" />
         <div className="p-6 flex items-center justify-center" style={{ minHeight: '400px' }}>
           <p style={{ color: 'var(--muted)' }}>載入中...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (!student) {
+    return (
+      <>
+        <Topbar title="學生詳情" />
+        <div className="p-6 flex items-center justify-center" style={{ minHeight: '400px' }}>
+          <p style={{ color: 'var(--muted)' }}>找不到學生記錄</p>
         </div>
       </>
     );
@@ -321,18 +312,11 @@ export default function StudentDetailPage() {
                     </tr>
                   </thead>
                   <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
-                    {mockAttendance.map((record, idx) => (
-                      <tr key={idx} style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{record.date}</td>
-                        <td className="px-4 py-3">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full"
-                            style={{ backgroundColor: record.status === 'present' ? 'var(--good-bg)' : 'var(--danger-bg)', color: record.status === 'present' ? 'var(--good)' : 'var(--danger)' }}>
-                            {record.status === 'present' ? '出席' : '缺席'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{record.remark}</td>
-                      </tr>
-                    ))}
+                    <tr>
+                      <td colSpan={3} className="px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                        暫無出席記錄
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -350,23 +334,11 @@ export default function StudentDetailPage() {
                     </tr>
                   </thead>
                   <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
-                    {mockAwards.map((award, idx) => (
-                      <tr key={idx} style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
-                        <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>
-                          <div className="flex items-center gap-2">
-                            <Award className="w-4 h-4" style={{ color: 'var(--warning)' }} />
-                            {award.name}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{award.semester}</td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{award.date}</td>
-                        <td className="px-4 py-3 text-right">
-                          <button className="p-2 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                            <Download className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    <tr>
+                      <td colSpan={4} className="px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                        暫無獎項記錄
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -374,24 +346,41 @@ export default function StudentDetailPage() {
 
             {activeTab === 'certificates' && (
               <div className="grid grid-cols-2 gap-4">
-                {mockCertificates.map((cert, idx) => (
-                  <div key={idx} className="rounded-lg p-4 hover:opacity-80" style={{ borderWidth: '1px', borderColor: 'var(--border)' }}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--info-bg)', color: 'var(--info)' }}>
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium" style={{ color: 'var(--text)' }}>{cert.name}</p>
-                          <p className="text-sm" style={{ color: 'var(--muted)' }}>發出日期：{cert.issue_date}</p>
-                        </div>
-                      </div>
-                      <button className="p-2 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
+                {certificates.length === 0 ? (
+                  <div className="col-span-2 px-4 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                    暫無證明文件
                   </div>
-                ))}
+                ) : (
+                  certificates.map((cert: any) => (
+                    <div key={cert.id} className="rounded-lg p-4 hover:opacity-80" style={{ borderWidth: '1px', borderColor: 'var(--border)' }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--info-bg)', color: 'var(--info)' }}>
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-medium" style={{ color: 'var(--text)' }}>{cert.certificate_type}</p>
+                            <p className="text-sm" style={{ color: 'var(--muted)' }}>狀態：{cert.status}{cert.issued_date ? ` | 發出：${cert.issued_date}` : ''}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const blob = await api.getCertificatePdf(id, cert.id);
+                              const url = URL.createObjectURL(blob);
+                              window.open(url, '_blank');
+                            } catch (e: any) {
+                              alert(e.message || '下載失敗');
+                            }
+                          }}
+                          className="p-2 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -423,7 +412,7 @@ export default function StudentDetailPage() {
             </div>
 
             <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
-              為 {student.name}（學號：{student.student_no}）選擇證明類型
+               為 {student?.name}（學號：{student?.student_no}）選擇證明類型
             </p>
 
             <div className="space-y-2 mb-6">

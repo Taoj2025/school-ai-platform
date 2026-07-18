@@ -5,23 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
-import { getStudentById, updateStudent } from '@/lib/studentStore';
-
-// Mock student data (default fallback)
-const mockStudent = {
-  id: '1',
-  name: '陳小明',
-  student_no: '2025001',
-  class: '1A',
-  gender: 'M',
-  enrollment_date: '2025-09-01',
-  status: 'active',
-  date_of_birth: '2013-05-15',
-  id_number: 'A123456(7)',
-  parent_name: '陳先生',
-  parent_phone: '9876-5432',
-  address: '香港九龍彩虹區彩虹道123號',
-};
+import { api } from '@/lib/api';
+import { normalizeStudent, toStudentPayload, type Student } from '@/lib/studentStore';
 
 const classOptions = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 const statusOptions = [
@@ -36,22 +21,51 @@ export default function EditStudentPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [formData, setFormData] = useState({ ...mockStudent });
+  const [formData, setFormData] = useState({
+    id: '',
+    name: '',
+    student_no: '',
+    class: '1A',
+    gender: 'M',
+    enrollment_date: '',
+    status: 'active',
+    date_of_birth: '',
+    id_number: '',
+    parent_name: '',
+    parent_phone: '',
+    address: '',
+  });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load student data
   useEffect(() => {
-    if (id) {
-      const student = getStudentById(id);
-      if (student) {
-        // Merge with mockStudent to ensure all fields exist
-        setFormData({ ...mockStudent, ...student });
-      } else {
-        setFormData({ ...mockStudent, id });
+    if (!id) return;
+    (async () => {
+      try {
+        const res = await api.getStudent(id);
+        const s: Student = normalizeStudent(res.data);
+        setFormData({
+          id: s.id,
+          name: s.name,
+          student_no: s.student_no,
+          class: s.class,
+          gender: s.gender,
+          enrollment_date: s.enrollment_date,
+          status: s.status,
+          date_of_birth: s.date_of_birth ?? '',
+          id_number: s.id_number ?? '',
+          parent_name: s.parent_name ?? '',
+          parent_phone: s.parent_phone ?? '',
+          address: s.address ?? '',
+        });
+      } catch {
+        setError('載入學生資料失敗');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }
+    })();
   }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -62,20 +76,14 @@ export default function EditStudentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
 
     try {
-      const updated = updateStudent(id, formData);
-      if (updated) {
-        alert('學生資料已更新');
-        router.push(`/dashboard/apple/students/${id}`);
-        router.refresh();
-      } else {
-        alert('更新失敗，找不到學生');
-      }
-    } catch (error) {
-      console.error('Failed to update student:', error);
-      alert('更新失敗，請稍後再試');
-    } finally {
+      await api.updateStudent(id, toStudentPayload(formData));
+      router.push(`/dashboard/apple/students/${id}`);
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || '更新失敗，請稍後再試');
       setSaving(false);
     }
   };
@@ -360,6 +368,12 @@ export default function EditStudentPage() {
               </div>
             </div>
           </div>
+
+          {error && (
+            <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              {error}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-4">

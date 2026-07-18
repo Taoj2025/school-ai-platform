@@ -16,6 +16,62 @@ export interface Student {
   parent_name?: string;
   parent_phone?: string;
   address?: string;
+  name_en?: string;
+  name_zh?: string;
+  class_name?: string;
+  admission_date?: string;
+}
+
+// Map a backend AppleStudent payload to the frontend Student shape
+export function normalizeStudent(raw: any): Student {
+  if (!raw) return raw;
+  return {
+    id: raw.id,
+    name: raw.name_zh || raw.name_en || raw.name || '',
+    name_zh: raw.name_zh,
+    name_en: raw.name_en,
+    student_no: raw.student_no,
+    class: raw.class_name || raw.class || '',
+    class_name: raw.class_name,
+    gender: raw.gender || '',
+    enrollment_date: raw.admission_date || raw.enrollment_date || '',
+    admission_date: raw.admission_date,
+    status: raw.status || 'active',
+    date_of_birth: raw.date_of_birth ? String(raw.date_of_birth).slice(0, 10) : undefined,
+    id_number: raw.id_number,
+    parent_name: raw.parent_name,
+    parent_phone: raw.parent_phone,
+    address: raw.address,
+  };
+}
+
+// Map frontend form data to a backend StudentCreate/StudentUpdate payload
+export function toStudentPayload(form: {
+  name: string;
+  student_no: string;
+  class: string;
+  gender: string;
+  enrollment_date: string;
+  status?: string;
+  date_of_birth?: string;
+  id_number?: string;
+  parent_name?: string;
+  parent_phone?: string;
+  address?: string;
+}) {
+  return {
+    student_no: form.student_no,
+    name_zh: form.name,
+    name_en: form.name,
+    gender: form.gender,
+    class_name: form.class,
+    admission_date: form.enrollment_date || undefined,
+    date_of_birth: form.date_of_birth || undefined,
+    status: form.status,
+    parent_name: form.parent_name || undefined,
+    parent_phone: form.parent_phone || undefined,
+    address: form.address || undefined,
+  };
 }
 
 const STORAGE_KEY = 'apple_students';

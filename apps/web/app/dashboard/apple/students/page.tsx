@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import {
@@ -14,8 +14,10 @@ import {
   Users,
   UserCheck,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
-import { getStudents, type Student } from '@/lib/studentStore';
+import { api } from '@/lib/api';
+import { normalizeStudent, type Student } from '@/lib/studentStore';
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
@@ -25,27 +27,25 @@ export default function StudentsPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load students on mount and listen for storage changes
-  useEffect(() => {
-    const loadStudents = () => {
-      const data = getStudents();
-      setStudents(data);
+  const loadStudents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.getStudents({ page: 1, page_size: 200 });
+      const items = (res.data?.items ?? []).map(normalizeStudent);
+      setStudents(items);
+    } catch (e: any) {
+      setError(e.message || '載入失敗');
+    } finally {
       setLoading(false);
-    };
-
-    loadStudents();
-
-    // Listen for storage events from other tabs/windows
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'apple_students') {
-        loadStudents();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    }
   }, []);
+
+  useEffect(() => {
+    loadStudents();
+  }, [loadStudents]);
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -58,6 +58,39 @@ export default function StudentsPage() {
 
   const activeStudents = students.filter((s) => s.status === 'active').length;
   const totalStudents = students.length;
+
+  const handleExport = () => {
+    const csv = [
+      ['學號', '姓名', '班別', '性別', '入學日期', '狀態'],
+      ...filteredStudents.map((s) => [
+        s.student_no,
+        s.name,
+        s.class,
+        s.gender === 'M' ? '男' : '女',
+        s.enrollment_date,
+        s.status,
+      ]),
+    ]
+      .map((row) => row.join(','))
+      .join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'students.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDelete = async (student: Student) => {
+    if (!confirm(`確定刪除學生「${student.name}」？`)) return;
+    try {
+      await api.deleteStudent(student.id);
+      await loadStudents();
+    } catch (e: any) {
+      alert(e.message || '刪除失敗');
+    }
+  };
 
   return (
     <>
@@ -78,7 +111,7 @@ export default function StudentsPage() {
               <Upload className="w-4 h-4" />
               批量導入
             </Link>
-            <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
               style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}>
               <Download className="w-4 h-4" />
               匯出名單
@@ -93,6 +126,16 @@ export default function StudentsPage() {
             </Link>
           </div>
         </div>
+
+        {error && (
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="py-12 text-center" style={{ color: 'var(--muted)' }}>載入中...</div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -249,30 +292,37 @@ export default function StudentsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--muted)' }}>
                         {student.enrollment_date}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full"
-                          style={{ backgroundColor: student.status === 'active' ? 'var(--good-bg)' : 'var(--warning-bg)', color: student.status === 'active' ? 'var(--good)' : 'var(--warning)' }}>
-                          {student.status === 'active' ? '在讀' : '休學'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link
-                            href={`/dashboard/apple/students/${student.id}`}
-                            className="p-2 rounded-md hover:opacity-70"
-                            style={{ color: 'var(--brand)' }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                          <Link
-                            href={`/dashboard/apple/students/${student.id}/edit`}
-                            className="p-2 rounded-md hover:opacity-70"
-                            style={{ color: 'var(--brand)' }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Link>
-                        </div>
-                      </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="px-2 py-1 text-xs font-medium rounded-full"
+                           style={{ backgroundColor: student.status === 'active' ? 'var(--good-bg)' : 'var(--warning-bg)', color: student.status === 'active' ? 'var(--good)' : 'var(--warning)' }}>
+                           {student.status === 'active' ? '在讀' : student.status === 'graduated' ? '畢業' : student.status === 'transferred' ? '轉學' : student.status === 'suspended' ? '休學' : student.status}
+                         </span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                         <div className="flex items-center justify-end gap-1">
+                           <Link
+                             href={`/dashboard/apple/students/${student.id}`}
+                             className="p-2 rounded-md hover:opacity-70"
+                             style={{ color: 'var(--brand)' }}
+                           >
+                             <Eye className="w-4 h-4" />
+                           </Link>
+                           <Link
+                             href={`/dashboard/apple/students/${student.id}/edit`}
+                             className="p-2 rounded-md hover:opacity-70"
+                             style={{ color: 'var(--brand)' }}
+                           >
+                             <Edit className="w-4 h-4" />
+                           </Link>
+                           <button
+                             onClick={() => handleDelete(student)}
+                             className="p-2 rounded-md hover:opacity-70"
+                             style={{ color: 'var(--danger)' }}
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                         </div>
+                       </td>
                     </tr>
                   ))
                 )}

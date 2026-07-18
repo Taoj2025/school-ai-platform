@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
-import { addStudent } from '@/lib/studentStore';
+import { api } from '@/lib/api';
+import { toStudentPayload } from '@/lib/studentStore';
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
 export default function NewStudentPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     student_no: '',
@@ -46,33 +48,14 @@ export default function NewStudentPage() {
     }
 
     setSaving(true);
+    setError(null);
 
     try {
-      // Add student to the store
-      const newStudent = addStudent({
-        name: formData.name,
-        student_no: formData.student_no,
-        class: formData.class,
-        gender: formData.gender,
-        enrollment_date: formData.enrollment_date,
-        status: 'active',
-        date_of_birth: formData.date_of_birth,
-        id_number: formData.id_number,
-        parent_name: formData.parent_name,
-        parent_phone: formData.parent_phone,
-        address: formData.address,
-      });
-
-      console.log('Student added:', newStudent);
-      alert(`學生已添加：${newStudent.name} (${newStudent.student_no})`);
-
-      // Redirect to student list page
+      await api.createStudent(toStudentPayload(formData));
       router.push('/dashboard/apple/students');
       router.refresh();
-    } catch (error) {
-      console.error('Failed to add student:', error);
-      alert('添加失敗，請稍後再試');
-    } finally {
+    } catch (err: any) {
+      setError(err.message || '添加失敗，請稍後再試');
       setSaving(false);
     }
   };
@@ -227,6 +210,12 @@ export default function NewStudentPage() {
               </div>
             </div>
           </div>
+
+          {error && (
+            <div className="rounded-md p-3" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              {error}
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-6 mt-6" style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
             <Link
