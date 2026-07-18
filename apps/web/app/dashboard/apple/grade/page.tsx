@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useAIGlobal } from '@/lib/ai-context';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { BarChart3, Upload, FileText, Users, AlertTriangle, CheckCircle, Clock, Plus, Search } from 'lucide-react';
@@ -20,6 +21,7 @@ interface ExamSession {
 }
 
 export default function GradeOverviewPage() {
+  useAIGlobal('grade', '成績管理');
   const [exams, setExams] = useState<ExamSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAIGlobal } from '@/lib/ai-context';
 import Topbar from '@/components/layout/Topbar';
 import {
   Plus,
@@ -39,6 +40,7 @@ type Asset = {
 };
 
 export default function AssetsPage() {
+  useAIGlobal('assets', '資產管理');
   const [activeTab, setActiveTab] = useState<'list' | 'movements' | 'stocktake'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssetDialog, setShowAssetDialog] = useState(false);

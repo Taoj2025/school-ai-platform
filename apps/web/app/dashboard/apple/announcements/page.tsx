@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Megaphone, Plus, FileText, Send, Clock, CheckCircle, XCircle, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { announcementTypeLabels, announcementStatusLabels } from '@/lib/utils';
+import { useAIGlobal } from '@/lib/ai-context';
 import EmptyState from '@/components/ui/EmptyState';
 
 interface Announcement {
@@ -21,6 +22,7 @@ interface Announcement {
 }
 
 export default function AnnouncementsOverviewPage() {
+  useAIGlobal('announcements', '公告管理');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

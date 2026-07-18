@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAIGlobal } from '@/lib/ai-context';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import {
@@ -50,6 +51,7 @@ const awardTypes = [
 ];
 
 export default function AwardsPage() {
+  useAIGlobal('awards', '獎項管理');
   const [awards, setAwards] = useState<Award[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useAIGlobal } from '@/lib/ai-context';
 import Topbar from '@/components/layout/Topbar';
 import {
   Plus,
@@ -54,6 +55,7 @@ type FinanceRecord = {
 };
 
 export default function FinancePage() {
+  useAIGlobal('finance', '財務管理');
   const [activeTab, setActiveTab] = useState<'income' | 'expense' | 'report'>('income');
   const [searchTerm, setSearchTerm] = useState('');
   const [showIncomeDialog, setShowIncomeDialog] = useState(false);

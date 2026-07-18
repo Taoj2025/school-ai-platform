@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAIGlobal } from '@/lib/ai-context';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import {
@@ -22,6 +23,7 @@ import { normalizeStudent, type Student } from '@/lib/studentStore';
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
 export default function StudentsPage() {
+  useAIGlobal('students', '學生管理');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
