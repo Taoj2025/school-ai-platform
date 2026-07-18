@@ -6,7 +6,7 @@ from datetime import datetime
 class AiGenerateRequest(BaseModel):
     job_type: str
     prompt: str
-    model: str = "gpt-4"
+    model: str = "kimi-k2.5"
     module: Optional[str] = None
 
 
