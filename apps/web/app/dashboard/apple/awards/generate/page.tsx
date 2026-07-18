@@ -9,19 +9,6 @@ import { api } from '@/lib/api';
 import { useAIGlobal } from '@/lib/ai-context';
 import { normalizeStudent } from '@/lib/studentStore';
 
-// Common input style using CSS variables
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 12px',
-  borderWidth: '1px',
-  borderStyle: 'solid',
-  borderColor: 'var(--border)',
-  borderRadius: '6px',
-  backgroundColor: 'var(--panel)',
-  color: 'var(--text)',
-  outline: 'none',
-};
-
 type CertStudent = { id: string; name: string; class: string; student_no: string };
 
 const awardOptions = [
@@ -406,6 +393,8 @@ export default function GenerateCertificatesPage() {
     }
   };
 
+  const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500';
+
   return (
     <>
       <Topbar title="生成獎狀" />
@@ -415,22 +404,20 @@ export default function GenerateCertificatesPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard/apple/awards"
-              className="p-2 rounded-md hover:opacity-70"
-              style={{ color: 'var(--muted)' }}
+              className="p-2 rounded-md hover:opacity-70 text-gray-500"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>批量生成獎狀</h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>選擇學生並批量生成獎狀 PDF</p>
+              <h2 className="text-2xl font-bold text-gray-900">批量生成獎狀</h2>
+              <p className="text-sm mt-1 text-gray-500">選擇學生並批量生成獎狀 PDF</p>
             </div>
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleGenerate}
               disabled={selectedStudents.length === 0 || generating}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: 'var(--brand)', color: 'var(--panel)' }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed bg-primary-600 text-white"
             >
               <FileText className="w-4 h-4" />
               {generating ? '生成中...' : '生成 PDF'}
@@ -439,17 +426,17 @@ export default function GenerateCertificatesPage() {
         </div>
 
         {/* Award Info Form */}
-        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+        <div className="rounded-lg p-4 bg-white border border-gray-200">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+              <label className="block text-sm font-medium mb-1 text-gray-900">
                 獎項名稱
               </label>
               <select
                 name="awardName"
                 value={awardName}
                 onChange={(e) => setAwardName(e.target.value)}
-                style={inputStyle}
+                className={inputClass}
               >
                 {awardOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -459,7 +446,7 @@ export default function GenerateCertificatesPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+              <label className="block text-sm font-medium mb-1 text-gray-900">
                 頒獎日期
               </label>
               <input
@@ -467,11 +454,11 @@ export default function GenerateCertificatesPage() {
                 name="ceremonyDate"
                 value={ceremonyDate}
                 onChange={(e) => setCeremonyDate(e.target.value)}
-                style={inputStyle}
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+              <label className="block text-sm font-medium mb-1 text-gray-900">
                 校長/簽署人
               </label>
               <input
@@ -480,16 +467,16 @@ export default function GenerateCertificatesPage() {
                 value={signatory}
                 onChange={(e) => setSignatory(e.target.value)}
                 placeholder="陳校長"
-                style={inputStyle}
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+              <label className="block text-sm font-medium mb-1 text-gray-900">
                 已選擇
               </label>
-              <div className="px-3 py-2 rounded-md text-center" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)' }}>
-                <span className="text-lg font-bold" style={{ color: 'var(--brand)' }}>{selectedStudents.length}</span>
-                <span style={{ color: 'var(--muted)' }}> 名學生</span>
+              <div className="px-3 py-2 rounded-md text-center bg-gray-50 border border-gray-200">
+                <span className="text-lg font-bold text-primary-600">{selectedStudents.length}</span>
+                <span className="text-gray-500"> 名學生</span>
               </div>
             </div>
           </div>
@@ -497,15 +484,14 @@ export default function GenerateCertificatesPage() {
 
         {/* Generated Status */}
         {generated && (
-          <div className="rounded-lg p-4 flex items-center justify-between" style={{ backgroundColor: 'var(--good-bg)', borderWidth: '1px', borderColor: 'var(--good)' }}>
-            <div className="flex items-center gap-2" style={{ color: 'var(--good)' }}>
+          <div className="rounded-lg p-4 flex items-center justify-between bg-green-50 border border-green-600">
+            <div className="flex items-center gap-2 text-green-600">
               <Check className="w-5 h-5" />
               <span>已成功生成 {selectedStudents.length} 份獎狀，請在打印窗口中選擇「另存為 PDF」</span>
             </div>
             <button
               onClick={handleDownloadAll}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90"
-              style={{ backgroundColor: 'var(--good)', color: 'var(--panel)' }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 bg-green-600 text-white"
             >
               <Download className="w-4 h-4" />
               下載 HTML
@@ -514,79 +500,76 @@ export default function GenerateCertificatesPage() {
         )}
 
         {/* Student List */}
-        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
-          <div className="p-4" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)', backgroundColor: 'var(--panel-soft)' }}>
+        <div className="rounded-lg overflow-hidden bg-white border border-gray-200">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selectAll}
                 onChange={handleSelectAll}
-                className="w-4 h-4 rounded"
-                style={{ accentColor: 'var(--brand)' }}
+                className="w-4 h-4 rounded accent-primary-600"
               />
-              <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>全選</span>
+              <span className="text-sm font-medium text-gray-900">全選</span>
             </label>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider w-12" style={{ color: 'var(--muted)' }}>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider w-12 text-gray-500">
                     選擇
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     學號
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     姓名
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     班別
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                     操作
                   </th>
                 </tr>
               </thead>
-              <tbody style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
+              <tbody className="border-t border-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       載入學生中...
                     </td>
                   </tr>
                 ) : students.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center" style={{ color: 'var(--muted)' }}>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       暫無學生資料
                     </td>
                   </tr>
                 ) : (
                   students.map((student) => (
-                  <tr key={student.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
+                  <tr key={student.id} className="hover:opacity-80 border-b border-gray-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedStudents.includes(student.id)}
                         onChange={() => handleSelectStudent(student.id)}
-                        className="w-4 h-4 rounded"
-                        style={{ accentColor: 'var(--brand)' }}
+                        className="w-4 h-4 rounded accent-primary-600"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text)' }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {student.student_no}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{ color: 'var(--text)' }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {student.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--muted)' }}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {student.class}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handlePreview(student.id)}
-                        className="p-2 rounded hover:opacity-70"
-                        style={{ color: 'var(--brand)' }}
+                        className="p-2 rounded hover:opacity-70 text-primary-600"
                         title="預覽獎狀"
                       >
                         <Eye className="w-4 h-4" />
@@ -603,23 +586,20 @@ export default function GenerateCertificatesPage() {
       {/* Preview Modal */}
       {previewStudent && (
         <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          className="fixed inset-0 flex items-center justify-center z-50 bg-black/70"
           onClick={() => setPreviewStudent(null)}
         >
           <div
-            className="rounded-lg max-w-4xl max-h-[90vh] overflow-auto p-6"
-            style={{ backgroundColor: 'var(--panel)' }}
+            className="rounded-lg max-w-4xl max-h-[90vh] overflow-auto p-6 bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>
+              <h3 className="text-lg font-bold text-gray-900">
                 獎狀預覽 - {previewStudent.name}
               </h3>
               <button
                 onClick={() => setPreviewStudent(null)}
-                className="p-2 rounded hover:opacity-70"
-                style={{ color: 'var(--muted)' }}
+                className="p-2 rounded hover:opacity-70 text-gray-500"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -679,16 +659,14 @@ export default function GenerateCertificatesPage() {
             <div className="flex justify-center gap-4">
               <button
                 onClick={handlePrintCertificate}
-                className="flex items-center gap-2 px-6 py-2 rounded-lg hover:opacity-90"
-                style={{ backgroundColor: 'var(--brand)', color: 'var(--panel)' }}
+                className="flex items-center gap-2 px-6 py-2 rounded-lg hover:opacity-90 bg-primary-600 text-white"
               >
                 <FileText className="w-4 h-4" />
                 打印獎狀
               </button>
               <button
                 onClick={() => setPreviewStudent(null)}
-                className="px-6 py-2 rounded-lg border"
-                style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+                className="px-6 py-2 rounded-lg border border-gray-200 text-gray-900"
               >
                 關閉
               </button>

@@ -19,26 +19,6 @@ const suggestedAmounts: Record<string, number[]> = {
   other: [500, 1000],
 };
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 12px',
-  borderWidth: '1px',
-  borderStyle: 'solid',
-  borderColor: 'var(--border)',
-  borderRadius: '6px',
-  backgroundColor: 'var(--panel)',
-  color: 'var(--text)',
-  outline: 'none',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '0.875rem',
-  fontWeight: 500,
-  marginBottom: '0.5rem',
-  color: 'var(--text)',
-};
-
 export default function NewStudentAwardPage() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
@@ -165,8 +145,8 @@ export default function NewStudentAwardPage() {
     return (
       <>
         <Topbar title="新增學生獎金" />
-        <div className="p-6 flex items-center justify-center" style={{ minHeight: '400px' }}>
-          <p style={{ color: 'var(--muted)' }}>載入中...</p>
+        <div className="p-6 flex items-center justify-center min-h-[400px]">
+          <p className="text-gray-500">載入中...</p>
         </div>
       </>
     );
@@ -174,6 +154,8 @@ export default function NewStudentAwardPage() {
 
   const selectedAward = awards.find((a) => a.id === formData.award_id);
   const suggestedList = selectedAward ? (suggestedAmounts[selectedAward.type] ?? []) : [];
+
+  const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500';
 
   return (
     <>
@@ -183,14 +165,13 @@ export default function NewStudentAwardPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/apple/awards/students"
-            className="p-2 rounded-md hover:opacity-70"
-            style={{ color: 'var(--muted)' }}
+            className="p-2 rounded-md hover:opacity-70 text-gray-500"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>新增學生獎金記錄</h2>
-            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
+            <h2 className="text-2xl font-bold text-gray-900">新增學生獎金記錄</h2>
+            <p className="text-sm mt-1 text-gray-500">
               為香港培英中學的學生分配獎項及獎金
             </p>
           </div>
@@ -199,25 +180,25 @@ export default function NewStudentAwardPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            <div className="rounded-lg p-4 bg-red-50 text-red-600">
               {error}
             </div>
           )}
           {/* Student Selection */}
-          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+          <div className="rounded-lg p-6 bg-white border border-gray-200">
             <div className="flex items-center gap-2 mb-4">
-              <Award className="w-5 h-5" style={{ color: 'var(--brand)' }} />
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>選擇學生</h3>
+              <Award className="w-5 h-5 text-primary-600" />
+              <h3 className="text-lg font-semibold text-gray-900">選擇學生</h3>
             </div>
 
             <div>
-              <label style={labelStyle}>
+              <label className="block text-sm font-medium mb-1 text-gray-900">
                 學生 *
               </label>
               <select
                 value={formData.student_id}
                 onChange={(e) => handleStudentChange(e.target.value)}
-                style={inputStyle}
+                className={inputClass}
                 required
               >
                 <option value="">請選擇學生</option>
@@ -230,19 +211,19 @@ export default function NewStudentAwardPage() {
             </div>
 
             {formData.student_id && (
-              <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+              <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p style={{ color: 'var(--muted)' }}>學號</p>
-                    <p className="font-medium" style={{ color: 'var(--text)' }}>{formData.student_no}</p>
+                    <p className="text-gray-500">學號</p>
+                    <p className="font-medium text-gray-900">{formData.student_no}</p>
                   </div>
                   <div>
-                    <p style={{ color: 'var(--muted)' }}>姓名</p>
-                    <p className="font-medium" style={{ color: 'var(--text)' }}>{formData.student_name}</p>
+                    <p className="text-gray-500">姓名</p>
+                    <p className="font-medium text-gray-900">{formData.student_name}</p>
                   </div>
                   <div>
-                    <p style={{ color: 'var(--muted)' }}>班別</p>
-                    <p className="font-medium" style={{ color: 'var(--text)' }}>{formData.student_class}</p>
+                    <p className="text-gray-500">班別</p>
+                    <p className="font-medium text-gray-900">{formData.student_class}</p>
                   </div>
                 </div>
               </div>
@@ -250,19 +231,19 @@ export default function NewStudentAwardPage() {
           </div>
 
           {/* Award Selection */}
-          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+          <div className="rounded-lg p-6 bg-white border border-gray-200">
             <div className="flex items-center gap-2 mb-4">
-              <Award className="w-5 h-5" style={{ color: 'var(--brand)' }} />
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>選擇獎項</h3>
+              <Award className="w-5 h-5 text-primary-600" />
+              <h3 className="text-lg font-semibold text-gray-900">選擇獎項</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label style={labelStyle}>獎項名稱 *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-900">獎項名稱 *</label>
                 <select
                   value={formData.award_id}
                   onChange={(e) => handleAwardChange(e.target.value)}
-                  style={inputStyle}
+                  className={inputClass}
                   required
                 >
                   <option value="">請選擇獎項</option>
@@ -276,12 +257,12 @@ export default function NewStudentAwardPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label style={labelStyle}>學年 *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-900">學年 *</label>
                   <select
                     name="academic_year"
                     value={formData.academic_year}
                     onChange={handleChange}
-                    style={inputStyle}
+                    className={inputClass}
                   >
                     <option value="2025-2026">2025-2026</option>
                     <option value="2024-2025">2024-2025</option>
@@ -289,12 +270,12 @@ export default function NewStudentAwardPage() {
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>學期 *</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-900">學期 *</label>
                   <select
                     name="semester"
                     value={formData.semester}
                     onChange={handleChange}
-                    style={inputStyle}
+                    className={inputClass}
                   >
                     <option value="上學期">上學期</option>
                     <option value="下學期">下學期</option>
@@ -306,15 +287,15 @@ export default function NewStudentAwardPage() {
           </div>
 
           {/* Bounty Amount */}
-          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+          <div className="rounded-lg p-6 bg-white border border-gray-200">
             <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-5 h-5" style={{ color: 'var(--brand)' }} />
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>獎金金額</h3>
+              <DollarSign className="w-5 h-5 text-primary-600" />
+              <h3 className="text-lg font-semibold text-gray-900">獎金金額</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label style={labelStyle}>
+                <label className="block text-sm font-medium mb-1 text-gray-900">
                   獎金金額 (HKD) *
                 </label>
                 <input
@@ -325,17 +306,17 @@ export default function NewStudentAwardPage() {
                   min="0"
                   step="50"
                   placeholder="例如：1000"
-                  style={inputStyle}
+                  className={inputClass}
                   required
                 />
               </div>
               <div>
-                <label style={labelStyle}>狀態 *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-900">狀態 *</label>
                 <select
                   name="payment_status"
                   value={formData.payment_status}
                   onChange={handleChange}
-                  style={inputStyle}
+                  className={inputClass}
                 >
                   <option value="pending">待發放</option>
                   <option value="paid">已發放</option>
@@ -346,19 +327,18 @@ export default function NewStudentAwardPage() {
 
             {suggestedList.length > 0 && (
               <div className="mt-3">
-                <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>建議金額（{selectedAward?.name}）：</p>
+                <p className="text-sm mb-2 text-gray-500">建議金額（{selectedAward?.name}）：</p>
                 <div className="flex flex-wrap gap-2">
                   {suggestedList.map((amount) => (
                     <button
                       key={amount}
                       type="button"
                       onClick={() => handleAmountSelect(amount)}
-                      className="px-3 py-1 border rounded-full text-sm hover:opacity-80"
-                      style={{
-                        borderColor: Number(formData.bounty_amount) === amount ? 'var(--brand)' : 'var(--border)',
-                        backgroundColor: Number(formData.bounty_amount) === amount ? 'var(--brand-light)' : 'var(--panel-soft)',
-                        color: Number(formData.bounty_amount) === amount ? 'var(--brand)' : 'var(--text)',
-                      }}
+                      className={`px-3 py-1 border rounded-full text-sm hover:opacity-80 ${
+                        Number(formData.bounty_amount) === amount
+                          ? 'border-primary-600 bg-primary-50 text-primary-600'
+                          : 'border-gray-200 bg-gray-50 text-gray-900'
+                      }`}
                     >
                       HK$ {amount.toLocaleString('zh-HK')}
                     </button>
@@ -369,44 +349,43 @@ export default function NewStudentAwardPage() {
           </div>
 
           {/* Dates & Remark */}
-          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>日期及備註</h3>
+          <div className="rounded-lg p-6 bg-white border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">日期及備註</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label style={labelStyle}>頒發日期 *</label>
+                <label className="block text-sm font-medium mb-1 text-gray-900">頒發日期 *</label>
                 <input
                   type="date"
                   name="issue_date"
                   value={formData.issue_date}
                   onChange={handleChange}
-                  style={inputStyle}
+                  className={inputClass}
                   required
                 />
               </div>
 
               <div>
-                <label style={labelStyle}>發放日期（已發放時填寫）</label>
+                <label className="block text-sm font-medium mb-1 text-gray-900">發放日期（已發放時填寫）</label>
                 <input
                   type="date"
                   name="payment_date"
                   value={formData.payment_date}
                   onChange={handleChange}
-                  style={inputStyle}
+                  className={inputClass}
                 />
               </div>
             </div>
 
             <div className="mt-4">
-              <label style={labelStyle}>備註</label>
+              <label className="block text-sm font-medium mb-1 text-gray-900">備註</label>
               <textarea
                 name="remark"
                 value={formData.remark}
                 onChange={handleChange}
                 rows={3}
                 placeholder="例如：全年級第一名、家長已簽收..."
-                className="resize-none"
-                style={inputStyle}
+                className={`${inputClass} resize-none`}
               />
             </div>
           </div>
@@ -415,16 +394,14 @@ export default function NewStudentAwardPage() {
           <div className="flex items-center justify-end gap-4">
             <Link
               href="/dashboard/apple/awards/students"
-              className="px-6 py-2 border rounded-lg hover:opacity-80"
-              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+              className="px-6 py-2 border rounded-lg hover:opacity-80 border-gray-200 text-gray-900"
             >
               取消
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: 'var(--brand)' }}
+              className="flex items-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 bg-primary-600"
             >
               <Save className="w-4 h-4" />
               {saving ? '保存中...' : '保存'}

@@ -120,57 +120,56 @@ export default function NewAnnouncementPage() {
       <div className="space-y-4">
         <Link
           href="/dashboard/apple/announcements"
-          className="inline-flex items-center gap-1 text-sm"
-          style={{ color: 'var(--brand)' }}
+          className="inline-flex items-center gap-1 text-sm text-primary-600"
         >
           <ArrowLeft className="w-4 h-4" /> 返回公告列表
         </Link>
 
         {error && (
-          <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+          <div className="p-3 rounded-lg text-sm bg-red-50 text-red-600">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">
           {/* Input form */}
-          <div className="p-4 rounded-lg space-y-3" style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}>
-            <h3 className="text-base font-semibold" style={{ color: 'var(--text)' }}>公告資訊</h3>
+          <div className="p-4 rounded-lg space-y-3 bg-white shadow-sm">
+            <h3 className="text-base font-semibold text-gray-900">公告資訊</h3>
 
             <Field label="公告類型">
-              <select name="title_type" value={form.title_type} onChange={(e) => update('title_type', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+              <select name="title_type" value={form.title_type} onChange={(e) => update('title_type', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900">
                 {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
 
             <Field label="目標對象">
-              <select name="target_audience" value={form.target_audience} onChange={(e) => update('target_audience', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+              <select name="target_audience" value={form.target_audience} onChange={(e) => update('target_audience', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900">
                 {AUDIENCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
 
             <Field label="關鍵日期 (用逗號分隔)">
-              <input name="key_dates" value={form.key_dates} onChange={(e) => update('key_dates', e.target.value)} placeholder="2026-10-15, 2026-10-20" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="key_dates" value={form.key_dates} onChange={(e) => update('key_dates', e.target.value)} placeholder="2026-10-15, 2026-10-20" className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
             </Field>
 
             <Field label="地點">
-              <input name="key_location" value={form.key_location} onChange={(e) => update('key_location', e.target.value)} placeholder="禮堂" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="key_location" value={form.key_location} onChange={(e) => update('key_location', e.target.value)} placeholder="禮堂" className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
             </Field>
 
             <Field label="科目 (考試類型)">
-              <input name="subject" value={form.subject} onChange={(e) => update('subject', e.target.value)} placeholder="數學" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="subject" value={form.subject} onChange={(e) => update('subject', e.target.value)} placeholder="數學" className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
             </Field>
 
             <Field label="負責老師 (用逗號分隔)">
-              <input name="teachers" value={form.teachers} onChange={(e) => update('teachers', e.target.value)} placeholder="陳老師, 李老師" className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <input name="teachers" value={form.teachers} onChange={(e) => update('teachers', e.target.value)} placeholder="陳老師, 李老師" className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
             </Field>
 
             <Field label="特別要求">
-              <textarea name="special_notes" value={form.special_notes} onChange={(e) => update('special_notes', e.target.value)} placeholder="請穿著整齊校服" rows={2} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+              <textarea name="special_notes" value={form.special_notes} onChange={(e) => update('special_notes', e.target.value)} placeholder="請穿著整齊校服" rows={2} className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
             </Field>
 
             <Field label="語氣">
-              <select name="formality" value={form.formality} onChange={(e) => update('formality', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+              <select name="formality" value={form.formality} onChange={(e) => update('formality', e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900">
                 <option value="formal">正式</option>
                 <option value="semi-formal">半正式</option>
                 <option value="casual">輕鬆</option>
@@ -180,8 +179,7 @@ export default function NewAnnouncementPage() {
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"
-              style={{ backgroundColor: 'var(--brand)', color: '#fff' }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-primary-600 text-white"
             >
               {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {generating ? 'AI 生成中...' : 'AI 生成雙語公告'}
@@ -189,19 +187,19 @@ export default function NewAnnouncementPage() {
           </div>
 
           {/* Preview */}
-          <div className="p-4 rounded-lg space-y-3" style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}>
-            <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: 'var(--text)' }}>
-              <Megaphone className="w-4 h-4" style={{ color: 'var(--brand)' }} /> 預覽
+          <div className="p-4 rounded-lg space-y-3 bg-white shadow-sm">
+            <h3 className="text-base font-semibold flex items-center gap-2 text-gray-900">
+              <Megaphone className="w-4 h-4 text-primary-600" /> 預覽
             </h3>
             {!generated ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center" style={{ color: 'var(--muted)' }}>
-                <Sparkles className="w-10 h-10 mb-3" style={{ color: 'var(--brand-light)' }} />
+              <div className="flex flex-col items-center justify-center py-16 text-center text-gray-500">
+                <Sparkles className="w-10 h-10 mb-3 text-primary-400" />
                 <p className="text-sm">填寫左側資訊後點擊「AI 生成」</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {generated.warnings && generated.warnings.length > 0 && (
-                  <div className="p-2 rounded-lg text-xs" style={{ backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' }}>
+                  <div className="p-2 rounded-lg text-xs bg-yellow-50 text-yellow-600">
                     ⚠️ {generated.warnings.join('；')}
                   </div>
                 )}
@@ -212,8 +210,7 @@ export default function NewAnnouncementPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"
-                  style={{ backgroundColor: 'var(--good)', color: '#fff' }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-green-600 text-white"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {saving ? '保存中...' : '保存為草稿'}
@@ -227,17 +224,10 @@ export default function NewAnnouncementPage() {
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  backgroundColor: 'var(--panel-soft)',
-  borderWidth: '1px',
-  borderColor: 'var(--border)',
-  color: 'var(--text)',
-};
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</label>
+      <label className="block text-xs mb-1 text-gray-500">{label}</label>
       {children}
     </div>
   );
@@ -246,8 +236,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function PreviewBlock({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</p>
-      <div className="p-2 rounded-lg text-sm whitespace-pre-wrap" style={{ backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}>
+      <p className="text-xs mb-1 text-gray-500">{label}</p>
+      <div className="p-2 rounded-lg text-sm whitespace-pre-wrap bg-gray-50 text-gray-900">
         {text || '—'}
       </div>
     </div>

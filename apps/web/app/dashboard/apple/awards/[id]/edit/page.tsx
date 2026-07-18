@@ -102,8 +102,10 @@ export default function EditAwardPage() {
   };
 
   if (loading) {
-    return (<><Topbar title="編輯獎項" /><div className="p-6 flex items-center justify-center" style={{ minHeight: '400px' }}><p style={{ color: 'var(--muted)' }}>載入中...</p></div></>);
+    return (<><Topbar title="編輯獎項" /><div className="p-6 flex items-center justify-center min-h-[400px]"><p className="text-gray-500">載入中...</p></div></>);
   }
+
+  const inputClass = 'w-full px-4 py-2 rounded-md outline-none transition-colors bg-gray-50 border border-gray-200 text-gray-900';
 
   return (
     <>
@@ -111,60 +113,60 @@ export default function EditAwardPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/dashboard/apple/awards/${id}`} className="p-2 rounded-md hover:opacity-70" style={{ color: 'var(--muted)' }}><ArrowLeft className="w-5 h-5" /></Link>
+            <Link href={`/dashboard/apple/awards/${id}`} className="p-2 rounded-md hover:opacity-70 text-gray-500"><ArrowLeft className="w-5 h-5" /></Link>
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>編輯獎項</h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>獎項ID: {id}</p>
+              <h2 className="text-2xl font-bold text-gray-900">編輯獎項</h2>
+              <p className="text-sm mt-1 text-gray-500">獎項ID: {id}</p>
             </div>
           </div>
         </div>
 
-        {error && <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>{error}</div>}
+        {error && <div className="p-3 rounded-lg text-sm bg-red-50 text-red-600">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>獎項信息</h3>
+          <div className="rounded-lg p-6 bg-white border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">獎項信息</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>獎項名稱 *</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 rounded-md outline-none transition-colors" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }} />
+                <label className="block text-sm font-medium mb-2 text-gray-900">獎項名稱 *</label>
+                <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>獎項類型 *</label>
-                <select name="award_type" value={formData.award_type} onChange={handleChange} required className="w-full px-4 py-2 rounded-md outline-none transition-colors" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                <label className="block text-sm font-medium mb-2 text-gray-900">獎項類型 *</label>
+                <select name="award_type" value={formData.award_type} onChange={handleChange} required className={inputClass}>
                   {awardTypeOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>學年 *</label>
-                <input type="text" name="academic_year" value={formData.academic_year} onChange={handleChange} required placeholder="例如: 2025-2026" className="w-full px-4 py-2 rounded-md outline-none transition-colors" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }} />
+                <label className="block text-sm font-medium mb-2 text-gray-900">學年 *</label>
+                <input type="text" name="academic_year" value={formData.academic_year} onChange={handleChange} required placeholder="例如: 2025-2026" className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>學期 *</label>
-                <select name="semester" value={formData.semester} onChange={handleChange} required className="w-full px-4 py-2 rounded-md outline-none transition-colors" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                <label className="block text-sm font-medium mb-2 text-gray-900">學期 *</label>
+                <select name="semester" value={formData.semester} onChange={handleChange} required className={inputClass}>
                   {semesterOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>獎金金額 (HKD)</label>
-                <input type="number" name="amount" value={formData.amount} onChange={handleChange} placeholder="選填" className="w-full px-4 py-2 rounded-md outline-none transition-colors" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }} />
+                <label className="block text-sm font-medium mb-2 text-gray-900">獎金金額 (HKD)</label>
+                <input type="number" name="amount" value={formData.amount} onChange={handleChange} placeholder="選填" className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>狀態 *</label>
-                <select name="status" value={formData.status} onChange={handleChange} required className="w-full px-4 py-2 rounded-md outline-none transition-colors" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }}>
+                <label className="block text-sm font-medium mb-2 text-gray-900">狀態 *</label>
+                <select name="status" value={formData.status} onChange={handleChange} required className={inputClass}>
                   {statusOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                 </select>
               </div>
             </div>
             <div className="mt-6">
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text)' }}>備註說明</label>
-              <textarea name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full px-4 py-2 rounded-md outline-none transition-colors resize-none" style={{ backgroundColor: 'var(--panel-soft)', borderWidth: '1px', borderColor: 'var(--border)', color: 'var(--text)' }} placeholder="輸入獎項的詳細說明..." />
+              <label className="block text-sm font-medium mb-2 text-gray-900">備註說明</label>
+              <textarea name="description" value={formData.description} onChange={handleChange} rows={4} className={`${inputClass} resize-none`} placeholder="輸入獎項的詳細說明..." />
             </div>
           </div>
 
           <div className="flex items-center justify-end gap-4">
-            <Link href={`/dashboard/apple/awards/${id}`} className="px-6 py-2 border rounded-lg hover:opacity-80 transition-opacity" style={{ borderColor: 'var(--border)', color: 'var(--text)' }}>取消</Link>
-            <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity" style={{ backgroundColor: 'var(--brand)' }}>
+            <Link href={`/dashboard/apple/awards/${id}`} className="px-6 py-2 border rounded-lg hover:opacity-80 transition-opacity border-gray-200 text-gray-900">取消</Link>
+            <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity bg-primary-600">
               <Save className="w-4 h-4" />{saving ? '保存中...' : '保存'}
             </button>
           </div>

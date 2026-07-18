@@ -99,10 +99,10 @@ export default function AnnouncementDetailPage() {
   };
 
   if (loading) {
-    return (<><Topbar title="公告詳情" /><p className="p-4 text-sm" style={{ color: 'var(--muted)' }}>載入中...</p></>);
+    return (<><Topbar title="公告詳情" /><p className="p-4 text-sm text-gray-500">載入中...</p></>);
   }
   if (!ann) {
-    return (<><Topbar title="公告詳情" /><p className="p-4 text-sm" style={{ color: 'var(--danger)' }}>{error || '找不到公告'}</p></>);
+    return (<><Topbar title="公告詳情" /><p className="p-4 text-sm text-red-600">{error || '找不到公告'}</p></>);
   }
 
   const statusLabel = announcementStatusLabels[ann.status] || ann.status;
@@ -112,47 +112,47 @@ export default function AnnouncementDetailPage() {
       <Topbar title="公告詳情" />
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <Link href="/dashboard/apple/announcements" className="inline-flex items-center gap-1 text-sm" style={{ color: 'var(--brand)' }}>
+          <Link href="/dashboard/apple/announcements" className="inline-flex items-center gap-1 text-sm text-primary-600">
             <ArrowLeft className="w-4 h-4" /> 返回
           </Link>
           <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'var(--panel-soft)', color: 'var(--text)' }}>
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-900">
               {statusLabel}
             </span>
             {ann.status === 'draft' && (
-              <button onClick={() => runAction(() => api.submitAnnouncement(id), 'submit')} disabled={!!action} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1" style={{ backgroundColor: 'var(--brand)', color: '#fff' }}>
+              <button onClick={() => runAction(() => api.submitAnnouncement(id), 'submit')} disabled={!!action} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 bg-primary-600 text-white">
                 {action === 'submit' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} 提交審批
               </button>
             )}
             {ann.status === 'pending_approval' && (
-              <button onClick={() => runAction(() => api.approveAnnouncement(id), 'approve')} disabled={!!action} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1" style={{ backgroundColor: 'var(--info)', color: '#fff' }}>
+              <button onClick={() => runAction(() => api.approveAnnouncement(id), 'approve')} disabled={!!action} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 bg-blue-600 text-white">
                 {action === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />} 審批通過
               </button>
             )}
             {ann.status === 'approved' && (
-              <button onClick={() => runAction(() => api.sendAnnouncement(id), 'send')} disabled={!!action} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1" style={{ backgroundColor: 'var(--good)', color: '#fff' }}>
+              <button onClick={() => runAction(() => api.sendAnnouncement(id), 'send')} disabled={!!action} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 bg-green-600 text-white">
                 {action === 'send' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} 發送
               </button>
             )}
-            <button onClick={() => setEditing((v) => !v)} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1" style={{ backgroundColor: 'var(--panel-soft)', color: 'var(--text)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+            <button onClick={() => setEditing((v) => !v)} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 bg-gray-50 text-gray-900 border border-gray-200">
               <Eye className="w-4 h-4" /> {editing ? '取消' : '編輯'}
             </button>
-            <button onClick={handleDelete} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            <button onClick={handleDelete} className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 bg-red-50 text-red-600">
               <Trash2 className="w-4 h-4" /> 刪除
             </button>
           </div>
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>{error}</div>
+          <div className="p-3 rounded-lg text-sm bg-red-50 text-red-600">{error}</div>
         )}
 
-        <div className="p-4 rounded-lg space-y-4" style={{ backgroundColor: 'var(--panel)', boxShadow: 'var(--shadow)' }}>
-          <div className="flex flex-wrap gap-2 text-xs" style={{ color: 'var(--muted)' }}>
-            <span className="px-2 py-1 rounded" style={{ backgroundColor: 'var(--panel-soft)' }}>{announcementTypeLabels[ann.announcement_type] || ann.announcement_type}</span>
-            <span className="px-2 py-1 rounded" style={{ backgroundColor: 'var(--panel-soft)' }}>{ann.target_audience}</span>
-            {ann.ai_generated && <span className="px-2 py-1 rounded" style={{ backgroundColor: 'var(--info-bg)', color: 'var(--info)' }}>AI 生成</span>}
-            {ann.key_dates && <span className="px-2 py-1 rounded" style={{ backgroundColor: 'var(--panel-soft)' }}>日期: {JSON.stringify(ann.key_dates)}</span>}
+        <div className="p-4 rounded-lg space-y-4 bg-white shadow-sm">
+          <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+            <span className="px-2 py-1 rounded bg-gray-50">{announcementTypeLabels[ann.announcement_type] || ann.announcement_type}</span>
+            <span className="px-2 py-1 rounded bg-gray-50">{ann.target_audience}</span>
+            {ann.ai_generated && <span className="px-2 py-1 rounded bg-blue-50 text-blue-600">AI 生成</span>}
+            {ann.key_dates && <span className="px-2 py-1 rounded bg-gray-50">日期: {JSON.stringify(ann.key_dates)}</span>}
           </div>
 
           {editing ? (
@@ -161,7 +161,7 @@ export default function AnnouncementDetailPage() {
               <EditField label="English Title" value={draft.title_en} onChange={(v) => setDraft((d) => ({ ...d, title_en: v }))} />
               <EditArea label="中文正文" value={draft.body_zh} onChange={(v) => setDraft((d) => ({ ...d, body_zh: v }))} />
               <EditArea label="English Body" value={draft.body_en} onChange={(v) => setDraft((d) => ({ ...d, body_en: v }))} />
-              <button onClick={saveEdit} disabled={!!action} className="px-4 py-2 rounded-lg text-sm flex items-center gap-1" style={{ backgroundColor: 'var(--good)', color: '#fff' }}>
+              <button onClick={saveEdit} disabled={!!action} className="px-4 py-2 rounded-lg text-sm flex items-center gap-1 bg-green-600 text-white">
                 {action === 'save' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 保存
               </button>
             </div>
@@ -179,18 +179,11 @@ export default function AnnouncementDetailPage() {
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  backgroundColor: 'var(--panel-soft)',
-  borderWidth: '1px',
-  borderColor: 'var(--border)',
-  color: 'var(--text)',
-};
-
 function EditField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label className="block text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</label>
-      <input name={label} value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+      <label className="block text-xs mb-1 text-gray-500">{label}</label>
+      <input name={label} value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
     </div>
   );
 }
@@ -198,8 +191,8 @@ function EditField({ label, value, onChange }: { label: string; value: string; o
 function EditArea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label className="block text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</label>
-      <textarea name={label} value={value} onChange={(e) => onChange(e.target.value)} rows={5} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+      <label className="block text-xs mb-1 text-gray-500">{label}</label>
+      <textarea name={label} value={value} onChange={(e) => onChange(e.target.value)} rows={5} className="w-full px-3 py-2 rounded-lg text-sm bg-gray-50 border border-gray-200 text-gray-900" />
     </div>
   );
 }
@@ -207,8 +200,8 @@ function EditArea({ label, value, onChange }: { label: string; value: string; on
 function ContentBlock({ label, text }: { label: string; text: string | null }) {
   return (
     <div>
-      <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>{label}</p>
-      <div className="p-3 rounded-lg text-sm whitespace-pre-wrap" style={{ backgroundColor: 'var(--panel-soft)', color: 'var(--text)', minHeight: '60px' }}>
+      <p className="text-xs mb-1 text-gray-500">{label}</p>
+      <div className="p-3 rounded-lg text-sm whitespace-pre-wrap bg-gray-50 text-gray-900 min-h-[60px]">
         {text || '—'}
       </div>
     </div>
