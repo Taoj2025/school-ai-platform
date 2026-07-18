@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import {
   Plus,
@@ -15,34 +15,43 @@ import {
   Camera,
 } from 'lucide-react';
 import UploadReceiptDialog from '@/components/modules/apple/UploadReceiptDialog';
+import { api } from '@/lib/api';
+import { incomeCategoryLabels, expenseCategoryLabels } from '@/lib/utils';
 
-// Mock data
-const mockIncome = [
-  { id: '1', date: '2025-09-15', description: '學費收入', amount: 125000, category: 'tuition', source: '2025-2026 第一期學費' },
-  { id: '2', date: '2025-09-20', description: '獎學金捐贈', amount: 5000, category: 'donation', source: '校友獎學金' },
-  { id: '3', date: '2025-09-25', description: '活動報名費', amount: 3500, category: 'activity', source: '暑期活動' },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const mockExpense = [
-  { id: '1', date: '2025-09-10', description: '辦公用品', amount: 2500, category: 'supplies', vendor: '文儀批发' },
-  { id: '2', date: '2025-09-15', description: '設備維修', amount: 8000, category: 'maintenance', vendor: '機電工程' },
-  { id: '3', date: '2025-09-20', description: '活動支出', amount: 12000, category: 'activity', vendor: '活動統籌' },
-];
+const ACADEMIC_YEAR = '2025-2026';
 
 const incomeCategories = [
   { value: 'tuition', label: '學費' },
   { value: 'donation', label: '捐贈' },
-  { value: 'activity', label: '活動' },
+  { value: 'event', label: '活動' },
   { value: 'other', label: '其他' },
 ];
 
 const expenseCategories = [
-  { value: 'supplies', label: '辦公用品' },
-  { value: 'maintenance', label: '設備維修' },
-  { value: 'activity', label: '活動支出' },
-  { value: 'salary', label: '人員薪酬' },
+  { value: 'salary', label: '薪資' },
+  { value: 'equipment', label: '設備' },
+  { value: 'maintenance', label: '維修' },
+  { value: 'event', label: '活動' },
   { value: 'other', label: '其他' },
 ];
+
+type FinanceRecord = {
+  id: string;
+  record_type: string;
+  category: string;
+  description: string;
+  amount: number;
+  transaction_date: string;
+  academic_year: string;
+  semester?: string | null;
+  payment_method?: string | null;
+  receipt_no?: string | null;
+  status: string;
+  source?: string;
+  vendor?: string;
+};
 
 export default function FinancePage() {
   const [activeTab, setActiveTab] = useState<'income' | 'expense' | 'report'>('income');
@@ -50,18 +59,59 @@ export default function FinancePage() {
   const [showIncomeDialog, setShowIncomeDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [showUploadReceiptDialog, setShowUploadReceiptDialog] = useState(false);
+  const [records, setRecords] = useState<FinanceRecord[]>([]);
+  const [stats, setStats] = useState<{ total_income: number; total_expense: number; net_balance: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredIncome = mockIncome.filter((item) =>
+  const loadRecords = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.getIncomeRecords({ page: 1, page_size: 200, category: undefined });
+      const all = [...(res.data?.items ?? [])];
+      const exp = await api.getExpenseRecords({ page: 1, page_size: 200 });
+      all.push(...(exp.data?.items ?? []));
+      setRecords(all);
+    } catch (e: any) {
+      setError(e.message || '載入失敗');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadStats = useCallback(async () => {
+    try {
+      const res = await api.getFinanceStats();
+      const s = res.data;
+      setStats({
+        total_income: s?.total_income ?? 0,
+        total_expense: s?.total_expense ?? 0,
+        net_balance: s?.net_balance ?? 0,
+      });
+    } catch {
+      setStats(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRecords();
+    loadStats();
+  }, [loadRecords, loadStats]);
+
+  const incomeList = records.filter((r) => r.record_type === 'income');
+  const expenseList = records.filter((r) => r.record_type === 'expense');
+
+  const filteredIncome = incomeList.filter((item) =>
+    item.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredExpense = expenseList.filter((item) =>
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredExpense = mockExpense.filter((item) =>
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalIncome = mockIncome.reduce((sum, item) => sum + item.amount, 0);
-  const totalExpense = mockExpense.reduce((sum, item) => sum + item.amount, 0);
-  const balance = totalIncome - totalExpense;
+  const totalIncome = stats?.total_income ?? incomeList.reduce((sum, i) => sum + Number(i.amount), 0);
+  const totalExpense = stats?.total_expense ?? expenseList.reduce((sum, i) => sum + Number(i.amount), 0);
+  const balance = stats?.net_balance ?? totalIncome - totalExpense;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('zh-HK', {
@@ -69,6 +119,52 @@ export default function FinancePage() {
       currency: 'HKD',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handleDelete = async (record: FinanceRecord) => {
+    if (!confirm(`確定刪除「${record.description}」？`)) return;
+    try {
+      await api.deleteFinanceRecord(record.id);
+      await loadRecords();
+      await loadStats();
+    } catch (e: any) {
+      alert(e.message || '刪除失敗');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/apple/finance?academic_year=${ACADEMIC_YEAR}&page_size=200`,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const json = await res.json();
+      const items = json?.data?.items ?? [];
+      const csv = [
+        ['日期', '類型', '描述', '類別', '金額', '狀態'],
+        ...items.map((r: any) => [
+          r.transaction_date,
+          r.record_type === 'income' ? '收入' : '支出',
+          r.description,
+          r.record_type === 'income'
+            ? incomeCategoryLabels[r.category] || r.category
+            : expenseCategoryLabels[r.category] || r.category,
+          r.amount,
+          r.status,
+        ]),
+      ]
+        .map((row) => row.join(','))
+        .join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `finance_${ACADEMIC_YEAR}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert(e.message || '匯出失敗');
+    }
   };
 
   return (
@@ -82,7 +178,7 @@ export default function FinancePage() {
             <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>管理收入、支出和財務統計</p>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
+            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:opacity-80"
               style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)', color: 'var(--text)' }}>
               <Download className="w-4 h-4" />
               匯出報表
@@ -159,6 +255,12 @@ export default function FinancePage() {
           </div>
         </div>
 
+        {error && (
+          <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            {error}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="rounded-lg" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
           <div style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
@@ -171,7 +273,7 @@ export default function FinancePage() {
                   color: activeTab === 'income' ? 'var(--brand)' : 'var(--muted)',
                 }}
               >
-                收入記錄
+                收入記錄 ({incomeList.length})
               </button>
               <button
                 onClick={() => setActiveTab('expense')}
@@ -181,7 +283,7 @@ export default function FinancePage() {
                   color: activeTab === 'expense' ? 'var(--brand)' : 'var(--muted)',
                 }}
               >
-                支出記錄
+                支出記錄 ({expenseList.length})
               </button>
               <button
                 onClick={() => setActiveTab('report')}
@@ -198,7 +300,11 @@ export default function FinancePage() {
 
           {/* Content */}
           <div className="p-6">
-            {activeTab !== 'report' && (
+            {loading && (
+              <div className="py-12 text-center" style={{ color: 'var(--muted)' }}>載入中...</div>
+            )}
+
+            {!loading && activeTab !== 'report' && (
               <div className="mb-4">
                 <div className="relative max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--muted)' }} />
@@ -214,7 +320,7 @@ export default function FinancePage() {
               </div>
             )}
 
-            {activeTab === 'income' && (
+            {!loading && activeTab === 'income' && (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
@@ -237,24 +343,22 @@ export default function FinancePage() {
                     ) : (
                       filteredIncome.map((item) => (
                         <tr key={item.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
-                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{item.date}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{item.transaction_date}</td>
                           <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>{item.description}</td>
                           <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>
-                            {incomeCategories.find((c) => c.value === item.category)?.label}
+                            {incomeCategoryLabels[item.category] || item.category}
                           </td>
-                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{item.source}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{item.source || item.receipt_no || '-'}</td>
                           <td className="px-4 py-3 text-sm text-right font-medium" style={{ color: 'var(--good)' }}>
-                            +{formatCurrency(item.amount)}
+                            +{formatCurrency(Number(item.amount))}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--danger)' }}>
+                              <button
+                                onClick={() => handleDelete(item)}
+                                className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--danger)' }}
+                                title="刪除"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -267,7 +371,7 @@ export default function FinancePage() {
               </div>
             )}
 
-            {activeTab === 'expense' && (
+            {!loading && activeTab === 'expense' && (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead style={{ backgroundColor: 'var(--panel-soft)' }}>
@@ -275,7 +379,7 @@ export default function FinancePage() {
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>日期</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>描述</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>類別</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>供應商</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>付款方式</th>
                       <th className="px-4 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>金額</th>
                       <th className="px-4 py-3 text-right text-xs font-medium uppercase" style={{ color: 'var(--muted)' }}>操作</th>
                     </tr>
@@ -290,24 +394,22 @@ export default function FinancePage() {
                     ) : (
                       filteredExpense.map((item) => (
                         <tr key={item.id} className="hover:opacity-80" style={{ borderBottomWidth: '1px', borderColor: 'var(--border)' }}>
-                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{item.date}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--text)' }}>{item.transaction_date}</td>
                           <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text)' }}>{item.description}</td>
                           <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>
-                            {expenseCategories.find((c) => c.value === item.category)?.label}
+                            {expenseCategoryLabels[item.category] || item.category}
                           </td>
-                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{item.vendor}</td>
+                          <td className="px-4 py-3 text-sm" style={{ color: 'var(--muted)' }}>{item.payment_method || item.receipt_no || '-'}</td>
                           <td className="px-4 py-3 text-sm text-right font-medium" style={{ color: 'var(--danger)' }}>
-                            -{formatCurrency(item.amount)}
+                            -{formatCurrency(Number(item.amount))}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--brand)' }}>
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--danger)' }}>
+                              <button
+                                onClick={() => handleDelete(item)}
+                                className="p-1.5 rounded hover:opacity-70" style={{ color: 'var(--danger)' }}
+                                title="刪除"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -320,16 +422,16 @@ export default function FinancePage() {
               </div>
             )}
 
-            {activeTab === 'report' && (
+            {!loading && activeTab === 'report' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel-soft)' }}>
                     <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>收入分佈</h3>
                     <div className="space-y-3">
                       {incomeCategories.map((cat) => {
-                        const catTotal = mockIncome
+                        const catTotal = incomeList
                           .filter((i) => i.category === cat.value)
-                          .reduce((sum, i) => sum + i.amount, 0);
+                          .reduce((sum, i) => sum + Number(i.amount), 0);
                         const percentage = totalIncome > 0 ? (catTotal / totalIncome) * 100 : 0;
                         return (
                           <div key={cat.value}>
@@ -352,9 +454,9 @@ export default function FinancePage() {
                     <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>支出分佈</h3>
                     <div className="space-y-3">
                       {expenseCategories.map((cat) => {
-                        const catTotal = mockExpense
+                        const catTotal = expenseList
                           .filter((i) => i.category === cat.value)
-                          .reduce((sum, i) => sum + i.amount, 0);
+                          .reduce((sum, i) => sum + Number(i.amount), 0);
                         const percentage = totalExpense > 0 ? (catTotal / totalExpense) * 100 : 0;
                         return (
                           <div key={cat.value}>
@@ -385,6 +487,7 @@ export default function FinancePage() {
         <RecordDialog
           type="income"
           onClose={() => setShowIncomeDialog(false)}
+          onSaved={() => { setShowIncomeDialog(false); loadRecords(); loadStats(); }}
         />
       )}
 
@@ -393,6 +496,7 @@ export default function FinancePage() {
         <RecordDialog
           type="expense"
           onClose={() => setShowExpenseDialog(false)}
+          onSaved={() => { setShowExpenseDialog(false); loadRecords(); loadStats(); }}
         />
       )}
 
@@ -412,18 +516,22 @@ export default function FinancePage() {
 function RecordDialog({
   type,
   onClose,
+  onSaved,
 }: {
   type: 'income' | 'expense';
   onClose: () => void;
+  onSaved: () => void;
 }) {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
     amount: '',
-    category: type === 'income' ? 'tuition' : 'supplies',
+    category: type === 'income' ? 'tuition' : 'salary',
     source: '',
     vendor: '',
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -437,10 +545,32 @@ function RecordDialog({
     outline: 'none',
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`${type === 'income' ? '收入' : '支出'}記錄已保存`);
-    onClose();
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        record_type: type,
+        category: formData.category,
+        description: formData.description,
+        amount: Number(formData.amount),
+        transaction_date: formData.date,
+        academic_year: ACADEMIC_YEAR,
+        payment_method: type === 'expense' ? formData.vendor || undefined : undefined,
+        receipt_no: type === 'income' ? formData.source || undefined : undefined,
+      };
+      if (type === 'income') {
+        await api.createIncome(payload);
+      } else {
+        await api.createExpense(payload);
+      }
+      onSaved();
+    } catch (err: any) {
+      setError(err.message || '保存失敗');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -503,23 +633,31 @@ function RecordDialog({
 
           {type === 'income' ? (
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>來源</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>來源 / 收據編號</label>
               <input
                 type="text"
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                 style={inputStyle}
+                placeholder="例如：家長會捐贈 / RCP-001"
               />
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>供應商</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>付款方式 / 供應商</label>
               <input
                 type="text"
                 value={formData.vendor}
                 onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
                 style={inputStyle}
+                placeholder="例如：銀行轉賬 / 文儀批发"
               />
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-md p-3" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              {error}
             </div>
           )}
 
@@ -527,17 +665,19 @@ function RecordDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border rounded-md hover:opacity-80"
+              disabled={saving}
+              className="px-4 py-2 border rounded-md hover:opacity-80 disabled:opacity-50"
               style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             >
               取消
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-white rounded-md hover:opacity-90"
+              disabled={saving}
+              className="px-4 py-2 text-white rounded-md hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: 'var(--brand)' }}
             >
-              保存
+              {saving ? '保存中...' : '保存'}
             </button>
           </div>
         </form>

@@ -157,6 +157,12 @@ class ApiClient {
     });
   }
 
+  async deleteFinanceRecord(id: string) {
+    return this.fetch<any>(`/api/v1/apple/finance/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getQuotations(params?: { page?: number; page_size?: number }) {
     return this.fetch<{ items: any[]; total: number }>(
       '/api/v1/apple/finance/quotations',

@@ -92,6 +92,8 @@ class FinanceService:
         )
         self.db.add(db_record)
         await self.db.flush()
+        await self.db.commit()
+        await self.db.refresh(db_record)
         return db_record
     
     async def update_record(self, record_id: str, update_data: FinanceRecordUpdate) -> Optional[AppleFinanceRecord]:
@@ -119,6 +121,7 @@ class FinanceService:
         
         await self.db.delete(record)
         await self.db.flush()
+        await self.db.commit()
         return True
     
     async def get_stats(self, academic_year: Optional[str] = None) -> dict:

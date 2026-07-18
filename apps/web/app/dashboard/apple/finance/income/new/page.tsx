@@ -4,13 +4,16 @@ import { useState } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const incomeCategories = [
   { value: 'tuition', label: '學費' },
   { value: 'donation', label: '捐贈' },
-  { value: 'activity', label: '活動' },
+  { value: 'event', label: '活動' },
   { value: 'other', label: '其他' },
 ];
+
+const ACADEMIC_YEAR = '2025-2026';
 
 export default function NewIncomePage() {
   const [formData, setFormData] = useState({
@@ -20,10 +23,28 @@ export default function NewIncomePage() {
     category: 'tuition',
     source: '',
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('收入記錄已保存');
+    setSaving(true);
+    setError(null);
+    try {
+      await api.createIncome({
+        record_type: 'income',
+        category: formData.category,
+        description: formData.description,
+        amount: Number(formData.amount),
+        transaction_date: formData.date,
+        academic_year: ACADEMIC_YEAR,
+        receipt_no: formData.source || undefined,
+      });
+      window.location.href = '/dashboard/apple/finance';
+    } catch (err: any) {
+      setError(err.message || '保存失敗');
+      setSaving(false);
+    }
   };
 
   return (
@@ -101,16 +122,22 @@ export default function NewIncomePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">來源</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">來源 / 收據編號</label>
                 <input
                   type="text"
                   value={formData.source}
                   onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="例如：家長會捐贈"
+                  placeholder="例如：家長會捐贈 / RCP-001"
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="rounded-md bg-red-50 text-red-600 p-3 text-sm">
+                {error}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
@@ -122,10 +149,11 @@ export default function NewIncomePage() {
             </Link>
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              保存
+              {saving ? '保存中...' : '保存'}
             </button>
           </div>
         </form>

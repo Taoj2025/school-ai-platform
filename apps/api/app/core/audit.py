@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+from decimal import Decimal
 from typing import Any, Optional
 from sqlalchemy import event
 from sqlalchemy.orm import Session
@@ -129,6 +130,12 @@ def _obj_to_dict(obj) -> Optional[dict]:
             value = getattr(obj, column.name, None)
             if isinstance(value, datetime):
                 value = value.isoformat()
+            elif isinstance(value, date):
+                value = value.isoformat()
+            elif isinstance(value, Decimal):
+                value = float(value)
+            elif isinstance(value, (bytes, bytearray)):
+                value = value.decode("utf-8", errors="replace")
             result[column.name] = value
         return result
     except Exception:
