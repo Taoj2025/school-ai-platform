@@ -59,7 +59,27 @@ export default function StudentsPage() {
   });
 
   const activeStudents = students.filter((s) => s.status === 'active').length;
+  const suspendedStudents = students.filter((s) => s.status === 'suspended').length;
+  const transferredStudents = students.filter((s) => s.status === 'transferred').length;
+  const graduatedStudents = students.filter((s) => s.status === 'graduated').length;
   const totalStudents = students.length;
+
+  const statusMeta = (status: string): { label: string; bg: string; color: string } => {
+    switch (status) {
+      case 'active':
+        return { label: '在讀', bg: 'var(--good-bg)', color: 'var(--good)' };
+      case 'suspended':
+        return { label: '休學', bg: 'var(--warning-bg)', color: 'var(--warning)' };
+      case 'transferred':
+        return { label: '轉學', bg: 'var(--info-bg)', color: 'var(--info)' };
+      case 'graduated':
+        return { label: '畢業', bg: 'var(--brand-light)', color: 'var(--brand)' };
+      case 'inactive':
+        return { label: '離校', bg: 'var(--panel-soft)', color: 'var(--muted)' };
+      default:
+        return { label: status, bg: 'var(--panel-soft)', color: 'var(--text)' };
+    }
+  };
 
   const handleExport = () => {
     const csv = [
@@ -70,7 +90,7 @@ export default function StudentsPage() {
         s.class,
         s.gender === 'M' ? '男' : '女',
         s.enrollment_date,
-        s.status,
+        statusMeta(s.status).label,
       ]),
     ]
       .map((row) => row.join(','))
@@ -171,19 +191,21 @@ export default function StudentsPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--muted)' }}>休學學生</p>
                 <p className="text-2xl font-bold" style={{ color: 'var(--warning)' }}>
-                  {totalStudents - activeStudents}
+                  {suspendedStudents}
                 </p>
               </div>
             </div>
           </div>
           <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--info-bg)', color: 'var(--info)' }}>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--brand-light)', color: 'var(--brand)' }}>
                 <FileText className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm" style={{ color: 'var(--muted)' }}>班別數量</p>
-                <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{classes.length}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>畢業 / 轉學</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>
+                  {graduatedStudents + transferredStudents}
+                </p>
               </div>
             </div>
           </div>
@@ -226,8 +248,10 @@ export default function StudentsPage() {
             >
               <option value="">全部狀態</option>
               <option value="active">在讀</option>
-              <option value="inactive">休學</option>
+              <option value="suspended">休學</option>
+              <option value="transferred">轉學</option>
               <option value="graduated">畢業</option>
+              <option value="inactive">離校</option>
             </select>
           </div>
         </div>
@@ -295,10 +319,15 @@ export default function StudentsPage() {
                         {student.enrollment_date}
                       </td>
                        <td className="px-6 py-4 whitespace-nowrap">
-                         <span className="px-2 py-1 text-xs font-medium rounded-full"
-                           style={{ backgroundColor: student.status === 'active' ? 'var(--good-bg)' : 'var(--warning-bg)', color: student.status === 'active' ? 'var(--good)' : 'var(--warning)' }}>
-                           {student.status === 'active' ? '在讀' : student.status === 'graduated' ? '畢業' : student.status === 'transferred' ? '轉學' : student.status === 'suspended' ? '休學' : student.status}
-                         </span>
+                         {(() => {
+                           const meta = statusMeta(student.status);
+                           return (
+                             <span className="px-2 py-1 text-xs font-medium rounded-full"
+                               style={{ backgroundColor: meta.bg, color: meta.color }}>
+                               {meta.label}
+                             </span>
+                           );
+                         })()}
                        </td>
                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                          <div className="flex items-center justify-end gap-1">

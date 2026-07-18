@@ -11,6 +11,13 @@ import { toStudentPayload } from '@/lib/studentStore';
 
 const classes = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
+const statusOptions = [
+  { value: 'active', label: '在讀' },
+  { value: 'graduated', label: '畢業' },
+  { value: 'transferred', label: '轉學' },
+  { value: 'suspended', label: '休學' },
+];
+
 export default function NewStudentPage() {
   const router = useRouter();
   useAIGlobal('students', '新增學生');
@@ -21,6 +28,7 @@ export default function NewStudentPage() {
     student_no: '',
     class: '1A',
     gender: 'M',
+    status: 'active',
     date_of_birth: '',
     id_number: '',
     enrollment_date: new Date().toISOString().split('T')[0],
@@ -176,6 +184,22 @@ export default function NewStudentPage() {
                     style={inputStyle}
                     required
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
+                    狀態 <span style={{ color: 'var(--danger)' }}>*</span>
+                  </label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    style={inputStyle}
+                    required
+                  >
+                    {statusOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

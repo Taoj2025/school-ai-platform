@@ -12,6 +12,7 @@ import {
   Tag,
   Eye,
   Edit,
+  Trash2,
   CheckCircle,
   AlertCircle,
   Camera,
@@ -245,7 +246,7 @@ export default function AssetsPage() {
                                 style={{ color: 'var(--danger)' }}
                                 title="刪除"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </td>

@@ -174,8 +174,9 @@ export default function AwardsPage() {
               <th style="border: 1px solid #ddd; padding: 8px;">類型</th>
               <th style="border: 1px solid #ddd; padding: 8px;">學年</th>
               <th style="border: 1px solid #ddd; padding: 8px;">學期</th>
-              <th style="border: 1px solid #ddd; padding: 8px;">人數</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">獎金金額</th>
               <th style="border: 1px solid #ddd; padding: 8px;">狀態</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">創建日期</th>
             </tr>
           </thead>
           <tbody>
@@ -188,6 +189,7 @@ export default function AwardsPage() {
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['學期']}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['獎金金額']}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['狀態']}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${row['創建日期']}</td>
               </tr>
             `).join('')}
           </tbody>
