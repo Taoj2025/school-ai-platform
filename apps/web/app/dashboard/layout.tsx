@@ -1,4 +1,5 @@
 import Sidebar from '@/components/layout/Sidebar';
+import AIAssistant from '@/components/AIAssistant';
 
 export default function DashboardLayout({
   children,
@@ -14,6 +15,7 @@ export default function DashboardLayout({
       >
         {children}
       </main>
+      <AIAssistant />
     </div>
   );
 }

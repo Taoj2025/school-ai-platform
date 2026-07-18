@@ -2,13 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BarChart3, Megaphone, Award, Wallet, Package, Users } from 'lucide-react';
 
 const navigation = [
-  { name: '總覽', href: '/dashboard/apple' },
-  { name: '獎項管理', href: '/dashboard/apple/awards' },
-  { name: '財務管理', href: '/dashboard/apple/finance' },
-  { name: '資產管理', href: '/dashboard/apple/assets' },
-  { name: '學生管理', href: '/dashboard/apple/students' },
+  { name: '總覽', href: '/dashboard/apple', icon: BarChart3 },
+  { name: '公告管理', href: '/dashboard/apple/announcements', icon: Megaphone },
+  { name: '獎項管理', href: '/dashboard/apple/awards', icon: Award },
+  { name: '財務管理', href: '/dashboard/apple/finance', icon: Wallet },
+  { name: '資產管理', href: '/dashboard/apple/assets', icon: Package },
+  { name: '成績管理', href: '/dashboard/apple/grade', icon: BarChart3 },
+  { name: '學生管理', href: '/dashboard/apple/students', icon: Users },
 ];
 
 export default function Sidebar() {
@@ -32,7 +35,7 @@ export default function Sidebar() {
             Apple 工作台
           </h1>
           <p className="text-xs" style={{ color: 'var(--sidebar-muted)' }}>
-            獎狀獎學金管理
+            獎學金・財務・資產・成績
           </p>
         </div>
       </div>
@@ -40,12 +43,12 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className="flex flex-col gap-1 px-2 py-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive ? 'text-white' : 'text-sidebar-item'
               }`}
               style={{
@@ -53,6 +56,7 @@ export default function Sidebar() {
                 color: isActive ? '#ffffff' : 'var(--sidebar-item)',
               }}
             >
+              {item.icon && <item.icon className="w-4 h-4" />}
               {item.name}
             </Link>
           );
