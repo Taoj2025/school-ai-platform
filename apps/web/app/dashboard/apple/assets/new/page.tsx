@@ -15,18 +15,6 @@ const categories = [
   { value: 'other', label: '其他' },
 ];
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 12px',
-  borderWidth: '1px',
-  borderStyle: 'solid',
-  borderColor: 'var(--border)',
-  borderRadius: '6px',
-  backgroundColor: 'var(--panel)',
-  color: 'var(--text)',
-  outline: 'none',
-};
-
 export default function NewAssetPage() {
   useAIGlobal('assets', '新增資產');
   const [formData, setFormData] = useState({
@@ -67,29 +55,28 @@ export default function NewAssetPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/apple/assets"
-            className="p-2 rounded-md hover:opacity-70"
-            style={{ color: 'var(--muted)' }}
+            className="p-2 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>新增資產</h2>
-            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>添加新的學校資產記錄</p>
+            <h2 className="text-2xl font-bold text-gray-900">新增資產</h2>
+            <p className="text-sm text-gray-500 mt-1">添加新的學校資產記錄</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-lg p-6" style={{ backgroundColor: 'var(--panel)', borderWidth: '1px', borderColor: 'var(--border)' }}>
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
-                資產名稱 <span style={{ color: 'var(--danger)' }}>*</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                資產名稱 <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={inputStyle}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="例如：投影機 EP-01"
                 required
               />
@@ -97,28 +84,28 @@ export default function NewAssetPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
-                  資產編號 <span style={{ color: 'var(--danger)' }}>*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  資產編號 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="code"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  style={inputStyle}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="例如：IT-2025-001"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
-                  類別 <span style={{ color: 'var(--danger)' }}>*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  類別 <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  style={inputStyle}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -129,63 +116,61 @@ export default function NewAssetPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
-                  位置 <span style={{ color: 'var(--danger)' }}>*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  位置 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="location"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  style={inputStyle}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="例如：301 課室"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>購置日期</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">購置日期</label>
                 <input
                   type="date"
                   name="purchase_date"
                   value={formData.purchase_date}
                   onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                  style={inputStyle}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>價值 (HKD)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">價值 (HKD)</label>
               <input
                 type="number"
                 name="value"
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                style={inputStyle}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="0"
               />
             </div>
 
             {error && (
-              <div className="rounded-md p-3 text-sm" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+              <div className="rounded-md p-3 text-sm bg-red-50 text-red-600">
                 {error}
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 mt-6" style={{ borderTopWidth: '1px', borderColor: 'var(--border)' }}>
+          <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <Link
               href="/dashboard/apple/assets"
-              className="px-4 py-2 border rounded-md hover:opacity-80"
-              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               取消
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-md hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: 'var(--brand)' }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {saving ? '保存中...' : '保存'}
